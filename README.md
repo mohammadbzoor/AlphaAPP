@@ -2,7 +2,7 @@
 
 <img src="flutter/assets/images/logo.png" width="130" alt="Alpha App Logo" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);" />
 
-# AlphaV3 (ألفا)
+# AlphaAPP (ألفا)
 ### Smart AI-Powered Personal Finance & Budgeting Platform
 
 [![Flutter](https://img.shields.io/badge/Flutter-SDK_%E2%89%A53.0.0-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
@@ -52,11 +52,11 @@
 
 ## 🌟 Executive Summary
 
-**AlphaV3** is a full-stack personal finance platform engineered to address the core challenges of personal wealth management, specifically tailored for the Arab and Jordanian markets (native **JOD** currency support and bidirectional Arabic RTL / English LTR design).
+**AlphaAPP** is a full-stack personal finance platform engineered to address the core challenges of personal wealth management, specifically tailored for the Arab and Jordanian markets (native **JOD** currency support and bidirectional Arabic RTL / English LTR design).
 
 ### Problem vs. Solution Matrix
 
-| The Real-World Challenge | The AlphaV3 Solution |
+| The Real-World Challenge | The AlphaAPP Solution |
 |---|---|
 | **High Friction in Manual Logging** | Multi-modal entry: Speech-to-Text, Camera Receipt OCR (`Google ML Kit`), and fast manual tagging. |
 | **Budget Depletion Before Payday** | Dynamic **Safe Daily Spending (SDS)** metric continuously recalibrates discretionary allowances. |
@@ -68,7 +68,7 @@
 
 ## 🏗️ System Architecture
 
-AlphaV3 follows a decoupled, highly scalable **Client-Server Architecture** with strict layer boundaries.
+AlphaAPP follows a decoupled, highly scalable **Client-Server Architecture** with strict layer boundaries.
 
 ### High-Level Architectural Flow
 
@@ -301,7 +301,7 @@ The Flutter client organizes state into **20 dedicated Providers**, ensuring hig
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
 │  Feature Comparison Matrix                                                               │
 ├──────────────────────────────────────┬──────────────────────┬────────────────────────────┤
-│ Capability                           │ AlphaV3              │ Traditional Finance Apps   │
+│ Capability                           │ AlphaAPP              │ Traditional Finance Apps   │
 ├──────────────────────────────────────┼──────────────────────┼────────────────────────────┤
 │ AI Smart Voice Logging               │ ✅ Automatic Parsing │ ❌ Not Supported           │
 │ On-Device Receipt Scanner (OCR)      │ ✅ Free & Embedded   │ ⚠️ Paid / Third-party only │
@@ -330,8 +330,8 @@ The Flutter client organizes state into **20 dedicated Providers**, ensuring hig
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/mohammadbzoor/alphav3.git
-   cd alphav3/backend
+   git clone https://github.com/mohammadbzoor/AlphaAPP.git
+   cd AlphaAPP/backend
    ```
 
 2. **Install dependencies**:
