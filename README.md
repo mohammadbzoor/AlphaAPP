@@ -1,5 +1,4 @@
-# AlphaV3 (ألفا) 🚀 — المنصة الذكية للإدارة المالية الشخصية
-### Smart AI-Powered Personal Finance & Budgeting Platform
+# AlphaV3 🚀 — Smart AI-Powered Personal Finance & Budgeting Ecosystem
 
 <div align="center">
 
@@ -12,65 +11,65 @@
 [![Vitest](https://img.shields.io/badge/Vitest-4.1.10-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
 
-**نظام بيئي مالي متكامل يجمع بين المحاسبة الدقيقة للدورات المالية، الأقفال التزامنية الآمنة، المسح الذكي للفواتير (OCR)، والمساعد الصوتي والنصي المدعوم بالذكاء الاصطناعي.**
+**A next-generation financial management platform combining automated cycle budgeting, concurrency-safe atomic ledgers, intelligent on-device receipt OCR, and interactive multi-modal AI voice & chat assistance.**
 
-[نظرة عامة](#-1-نظرة-عامة-على-المشروع) • [البنية التقنية](#-2-البنية-التقنية-technical-architecture) • [الميزات التفصيلية](#-3-الميزات-والوظائف-التفصيلية) • [هيكل قاعدة البيانات](#-4-هيكل-قاعدة-البيانات-والمايجريشنز) • [إدارة الحالة](#-5-إدارة-الحالة-state-management) • [المزايا التنافسية](#-6-المزايا-التنافسية) • [دليل التشغيل](#-7-دليل-التشغيل-والتثبيت)
+[Overview](#-1-project-overview) • [Architecture](#-2-technical-architecture) • [Key Features](#-3-detailed-features--capabilities) • [Database & Migrations](#-4-database-architecture--migrations) • [State Management](#-5-state-management-architecture) • [API Specs](#-6-api-architecture--endpoints) • [Competitive Advantages](#-7-competitive-advantages) • [Getting Started](#-8-installation--getting-started)
 
 </div>
 
 ---
 
-## 📌 1. نظرة عامة على المشروع
+## 📌 1. Project Overview
 
-**AlphaV3 (ألفا)** هو تطبيق متقدم لإدارة الشؤون المالية الشخصية، مصمم لتمكين المستخدمين (خاصة في السوق الأردني والعربي) من فرض السيطرة الكاملة على ميزانياتهم، التغلب على عشوائية الصرف، وبناء عادات ادخار مستدامة عبر أدوات أتمتة وذكاء اصطناعي تفاعلية.
+**AlphaV3 (Alpha)** is an advanced, full-stack personal finance application engineered to empower users to take full control of their financial life. By combining modern budgeting methodologies (50/30/20 buckets, cycle-based planning, and emergency fund protection) with state-of-the-art AI capabilities (voice interaction, intelligent receipt OCR parsing via n8n pipelines, and real-time financial insights), AlphaV3 transforms chaotic personal spending into an automated, stress-free habit.
 
-### 1.1 المشاكل التي يعالجها المشروع
+### 1.1 Problems Solved
 
-| التحدي المالي الشائع | الحل المبتكر في AlphaV3 |
-|----------------------|--------------------------|
-| **صعوبة تسجيل المصاريف يدوياً** | إدخال فوري متعدد الوسائط (صوت ذكي + مسح فواتير بالكاميرا OCR + إدخال يدوي) |
-| **غياب خطة ميزانية واضحة** | نظام الدورات المالية الشهرية (Cycles) وتقسيم الميزانية لـ 3 سلال (احتياجات، رغبات، مدخرات) |
-| **تبخر الرواتب قبل نهاية الشهر** | مؤشر الصرف اليومي الآمن (**Safe Daily Spending**) لتوزيع المصروف على أيام الدورة |
-| **العجز عن الالتزام بالادخار** | تخصيص مالي تلقائي وصارم وصندوق طوارئ محمي بمبدأ محاسبي يمنع الحساب المزدوج |
-| **عدم فهم الوضع المالي العام** | مركز التحليل المالي الذكي مع تقارير ورسوم بيانية تفاعلية وتوصيات مستمرة |
-| **الملل وفقدان الحافز المالي** | نظام تحديات ادخار تفاعلي، نقاط ومكافآت، ولوحة متصدرين (Leaderboard) |
+| Common Financial Pain Point | AlphaV3 Solution |
+|-----------------------------|-------------------|
+| **Friction in recording daily expenses** | Instant multi-modal capture (Smart Voice input + Camera OCR + Manual quick entry) |
+| **Lack of structured budget planning** | Automated monthly **Financial Cycles** and strict 3-bucket budgeting (Needs, Wants, Savings) |
+| **Running out of money before month-end** | Dynamic **Safe Daily Spending (SDS)** metrics to meter safe discretionary spending |
+| **Inability to maintain savings habits** | Automated savings allocation with dedicated **Emergency Fund** and **No Double-Counting** guarantees |
+| **Lack of comprehensive financial clarity** | Central Financial Analysis Center with interactive charts, health scores, and personalized AI tips |
+| **Boredom and loss of motivation** | Gamified savings challenges, badges, milestones, and competitive Leaderboard |
 
 ---
 
-## 🏗️ 2. البنية التقنية (Technical Architecture)
+## 🏗️ 2. Technical Architecture
 
-يعتمد المشروع على معمارية العميل والخادم (**Client-Server Architecture**) عبر واجهات **RESTful API** فائقة الأمان والسرعة.
+AlphaV3 follows a hardened **Client-Server Architecture** with a high-performance **RESTful API** backend and a reactive cross-platform mobile frontend.
 
-### 2.1 مخطط المعمارية العام
+### 2.1 System Architecture Diagram
 
 ```mermaid
 graph TB
-    subgraph "Frontend — Flutter Mobile App"
+    subgraph "Frontend — Flutter Mobile Client"
         A[📱 Flutter App] --> B[Screens Layer - 30+ Screens]
-        A --> C[Providers Layer - 20 Providers]
-        A --> D[Services Layer - HTTP & Native]
-        A --> E[Models Layer - Type Safety]
+        A --> C[Providers Layer - 20 State Providers]
+        A --> D[Services Layer - HTTP & Native APIs]
+        A --> E[Models Layer - Strongly-Typed DTOs]
     end
 
     subgraph "Backend — Node.js REST API"
-        F[🔧 Express.js 5 Server] --> G[Routes Layer]
+        F[🔧 Express.js 5 API Server] --> G[Routes Layer]
         F --> H[Controllers Layer]
-        F --> I[Services — Business Logic]
-        F --> J[Repositories — Data Access & Locks]
-        F --> K[Security & Auth Middleware]
+        F --> I[Services — Domain & Accounting Logic]
+        F --> J[Repositories — Data Access & Row Locks]
+        F --> K[Security & Authentication Middleware]
     end
 
-    subgraph "Database & Storage"
-        L[(MySQL 8 Database)]
+    subgraph "Database & Persistence"
+        L[(MySQL 8 Database - InnoDB)]
     end
 
     subgraph "External Integrations"
-        M[🤖 n8n — AI Workflow Automation]
-        N[🎤 Speech-to-Text & Audio Engines]
+        M[🤖 n8n — Workflow Automation Engine]
+        N[🎤 Speech-To-Text & Audio Engines]
         O[📷 Google ML Kit OCR Engine]
     end
 
-    D <-- "Secure REST API (JWT / JSON)" --> F
+    D <-- "Secure REST API (JWT / JSON / HTTPS)" --> F
     I --> L
     J --> L
     I --> M
@@ -78,7 +77,7 @@ graph TB
     A --> O
 ```
 
-### 2.2 منظومة الخدمات الخارجية وسير عمل الذكاء الاصطناعي
+### 2.2 External Integrations & AI Pipeline Workflow
 
 ```mermaid
 graph LR
@@ -88,15 +87,15 @@ graph LR
 
     subgraph "AI & Orchestration (n8n)"
         B[n8n Webhook Gateway]
-        C[AI Language Model / Prompt Engine]
-        D[📝 تحليل النصوص المالية وتصنيفها]
-        E[💬 المحادثة المالية التفاعلية مع سياق المستخدم]
-        F[🎤 معالجة وتحليل الإدخال الصوتي]
+        C[LLM Prompt Engine]
+        D[📝 Financial Text Analysis & Classification]
+        E[💬 Context-Aware Conversational AI]
+        F[🎤 Voice Note Parsing & Entity Extraction]
     end
 
     subgraph "Mobile On-Device AI"
         G[Google ML Kit OCR]
-        H[Speech-To-Text Plugin]
+        H[Native Speech Recognition]
     end
 
     A <--> B
@@ -108,114 +107,127 @@ graph LR
     H --> A
 ```
 
-### 2.3 حزمة التقنيات المستخدمة
+---
 
-#### تطبيق الموبايل (Flutter Client)
-- **Flutter SDK** `>= 3.0.0` & **Dart** `>= 3.0.0`
-- **إدارة الحالة**: `provider: ^6.1.5`
-- **التدويل واللغات**: `easy_localization: ^3.0.8` (عربي RTL وإنجليزي LTR كامل)
-- **الرسوم البيانية والتحليلات**: `fl_chart: ^1.2.0`
-- **الذكاء الاصطناعي على الجهاز (OCR)**: `google_mlkit_text_recognition: ^0.16.0`
-- **التعامل مع الصوت**: `speech_to_text: ^7.4.0` و `record: ^7.1.1` و `just_audio: ^0.10.6`
-- **التقويم والتاريخ**: `table_calendar: ^3.2.0`
-- **الكاميرا والصور**: `camera: ^0.12.0` و `image_picker: ^1.2.3`
-- **الخطوط والتصميم**: `google_fonts: ^8.2.0` بتصميم **Mariam UI** العصري
+## 🛠️ 3. Technology Stack
 
-#### الخادم والواجهات الخلفية (Backend API)
-- **Node.js** مع إطار العمل الحديث **Express.js** `5.2.1`
-- **قاعدة البيانات**: **MySQL 8** عبر بروتوكول `mysql2: ^3.23.1` بـ Transactions صارمة
-- **الأمان والمصادقة**: `jsonwebtoken: ^9.0.3` و `bcrypt: ^6.0.0` و `helmet: ^8.3.0`
-- **الحماية من الهجمات**: `express-rate-limit: ^8.6.0` (حماية عامة + حماية خاصة للشات الذكي)
-- **معالجة الملفات والمدخلات**: `multer: ^2.2.0` و `express-validator: ^7.3.2`
-- **الاختبارات الآلية**: **Vitest** `^4.1.10` و **Supertest** `^7.2.2`
+### 3.1 Mobile Frontend (Flutter)
+| Technology | Version | Purpose |
+|---|---|---|
+| **Flutter SDK** | `>= 3.0.0` | Cross-platform UI toolkit (Android & iOS) |
+| **Dart** | `>= 3.0.0` | Strongly-typed object-oriented client language |
+| **Provider** | `^6.1.5` | Centralized reactive state management |
+| **Easy Localization** | `^3.0.8` | Full internationalization (Arabic RTL & English LTR) |
+| **Google Fonts** | `^8.2.0` | Custom typography supporting modern Mariam UI |
+| **FL Chart** | `^1.2.0` | Interactive spending & savings charts |
+| **Google ML Kit** | `^0.16.0` | On-device text recognition (Receipt OCR) |
+| **Record & Just Audio** | `^7.1.1` / `^0.10.6` | Voice recording and dynamic audio playback |
+| **Speech To Text** | `^7.4.0` | Real-time voice-to-text transcriptions |
+| **Camera & Image Picker**| `^0.12.0` / `^1.2.3` | Receipt capturing and image selection |
+| **Table Calendar** | `^3.2.0` | Interactive financial calendar & cycle timeline |
+
+### 3.2 Backend API (Node.js)
+| Technology | Version | Purpose |
+|---|---|---|
+| **Node.js** | `>= 18.x` | Scalable asynchronous JavaScript runtime |
+| **Express.js** | `5.2.1` | Modern, high-throughput REST API framework |
+| **MySQL 2** | `^3.23.1` | Relational database driver with ACID transactions |
+| **JSONWebToken** | `^9.0.3` | Stateless token authentication |
+| **Bcrypt** | `^6.0.0` | Cryptographic password hashing |
+| **Helmet** | `^8.3.0` | HTTP security header protection |
+| **Express Rate Limit** | `^8.6.0` | Brute-force & DDoS mitigation |
+| **Express Validator** | `^7.3.2` | Robust request validation and payload sanitization |
+| **Multer** | `^2.2.0` | Multi-part form handling for receipt images and audio |
+| **Vitest & Supertest** | `^4.1.10` / `^7.2.2`| Automated unit & integration testing framework |
 
 ---
 
-## ⚡ 3. الميزات والوظائف التفصيلية
+## ✨ 4. Detailed Features & Capabilities
 
-### 3.1 نظام المصادقة والتسجيل (Authentication & OTP)
-- تسجيل الدخول الآمن برقم الهاتف وكلمة المرور مع تشفير `bcrypt`.
-- التحقق وتأكيد الحساب عبر رمز **OTP** مخصص.
-- استعادة كلمة المرور وإعادة تعيينها بخطوات آمنة.
-- توجيه المستخدم الجديد عبر مراحل **Onboarding** تفاعلية لبناء الملف المالي الأساسي.
+### 4.1 Authentication & Multi-Stage Onboarding
+- **Secure Credentials**: Phone number and password authentication backed by salted `bcrypt` hashing.
+- **OTP Verification**: Multi-step verification and password reset flows with temporary tokens.
+- **Financial Profile Setup**: Multi-tier onboarding wizard collecting initial income, fixed commitments, and target emergency fund percentages.
+- **Financial Tier Classification**: Dynamic detection of user financial tier to customize recommendations.
 
-### 3.2 إدخال المصاريف متعدد الوسائط (Multi-Modal Expense Engine)
+### 4.2 Multi-Modal Expense Logging Engine
 
 ```mermaid
 flowchart TD
-    A[إضافة مصروف جديد] --> B{اختيار وسيلة الإدخال}
-    B --> C[✍️ إدخال يدوي]
-    B --> D[🎤 إدخال صوتي ذكي]
-    B --> E[📷 مسح فاتورة OCR]
-    C --> F[اختيار التصنيف والمبلغ والتاريخ والسلة]
-    D --> G[تسجيل الصوت → إرسال للـ AI → استخراج الحقول]
-    E --> H[التقاط الفاتورة → قراءة النصوص Google ML Kit → استخراج تلقائي]
-    F --> I[💾 حفظ المعاملة في دفتر الأستاذ]
-    G --> J[📝 شاشة مراجعة مسودة المعاملة وتعديلها]
+    A[Add New Expense] --> B{Select Input Method}
+    B --> C[✍️ Manual Entry]
+    B --> D[🎤 Voice Note]
+    B --> E[📷 Receipt Scanner OCR]
+    C --> F[Select Category, Amount, Date & Bucket]
+    D --> G[Record Audio → AI Extraction → Fill Candidate Fields]
+    E --> H[Capture Photo → ML Kit OCR → Auto-parse Merchant & Total]
+    F --> I[💾 Commit Transaction to Ledger]
+    G --> J[📝 Draft Review Screen & Quick Adjustments]
     H --> J
     J --> I
 ```
 
-### 3.3 الدورات المالية وحساب الميزانية (Financial Cycles & Settlement)
+### 4.3 Financial Cycles & Settlement Architecture
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Draft : إنشاء الدورة وتحديد التواريخ
-    Draft --> Active : بدء الدورة وتخصيص المدخرات
-    Active --> SettlementPreview : نهاية فترة الدورة ومعاينة التسوية
-    SettlementPreview --> Settlement : تأكيد مراجعة الأرقام المتبقية
-    Settlement --> Closed : إغلاق الدورة وترحيل الفوائض
+    [*] --> Draft : Create Cycle & Set Date Range
+    Draft --> Active : Start Cycle & Lock Savings Allocations
+    Active --> SettlementPreview : Cycle Period Ends & Preview Settlement
+    SettlementPreview --> Settlement : Confirm Surpluses & Deficits
+    Settlement --> Closed : Close Cycle & Roll Over to Next Period
     Closed --> [*]
 ```
 
-- **توزيع السلال 50/30/20**: تصنيف تلقائي للاحتياجات الأساسية، الرغبات، والمدخرات.
-- **Safe Daily Spending (SDS)**: احتساب ذكي للإنفاق اليومي المسموح به لمنع العجز.
-- **تسوية دقيقة للدورة (Cycle Settlement)**: معالجة شاملة للفائض أو العجز وترحيله بصورة موثوقة.
+- **50/30/20 Bucket Allocation**: Automatic categorization into **Needs**, **Wants**, and **Savings**.
+- **Safe Daily Spending (SDS)**: Dynamically calculated daily allowances based on remaining active cycle days and unallocated discretionary budget.
+- **Cycle Settlement**: Seamless month-end reconciliation reconciling actual spending against planned targets.
 
-### 3.4 إدارة الأهداف وصندوق الطوارئ (Goals & Canonical Savings)
+### 4.4 Financial Goals, Emergency Fund & Canonical Accounting
 
 ```mermaid
 flowchart TD
-    A[🎯 إنشاء هدف مالي جديد] --> B[تحديد التكلفة والمدة والاسم]
-    B --> C[حساب القسط الشهري المطلوب تلقائياً]
-    C --> D[خصم واقتطاع ذري عند بدء كل دورة مالية]
-    D --> E{هل اكتمل المبلغ المطلوب؟}
-    E -- لا --> D
-    E -- نعم --> F[✅ أصبح الهدف جاهزاً للتنفيذ]
-    F --> G{خيارات المستخدم}
-    G --> H[تنفيذ الهدف - Execute]
-    G --> I[تأجيل الهدف - Defer]
-    G --> J[إعادة التخصيص - Reallocate]
+    A[🎯 Create Goal] --> B[Define Target Amount, Deadline & Category]
+    B --> C[Auto-compute Monthly Required Allocation]
+    C --> D[Deduct Contribution Atomically at Cycle Start]
+    D --> E{Target Reached?}
+    E -- No --> D
+    E -- Yes --> F[✅ Goal Ready For Execution]
+    F --> G{User Action}
+    G --> H[Execute Goal]
+    G --> I[Defer Goal]
+    G --> J[Reallocate Funds]
 ```
 
-- **Permanent Ledger**: كل مساهمة في الهدف تُسجل كحركة مالية غير قابلة للتلاعب.
-- **Row-Level Locking (`SELECT ... FOR UPDATE`)**: حماية تزامنية تمنع تعارض الحركات في البيئات متعددة الطلبات.
-- **معادلة الادخار القانونية الصارمة**:
+- **Permanent Ledger**: Every contribution, debit, and transfer is logged immutably in `goal_ledger`.
+- **Row-Level Locking (`SELECT ... FOR UPDATE`)**: Eliminates race conditions during concurrent goal operations.
+- **Canonical Savings Formula**:
   $$\text{Unallocated Savings} = \text{Planned Savings} - \text{Emergency Fund} - \sum \text{Goal Allocations}$$
-- **Zero Double-Counting**: ضمان عدم تكرار احتساب أموال الأهداف مع رصيد الدورة التشغيلي.
+- **Zero Double-Counting Guarantee**: Absolute mathematical separation between operational cycle funds, emergency reserves, and long-term goal allocations.
 
 ```mermaid
-pie title توزيع المدخرات في كل دورة مالية
-    "صندوق الطوارئ (Emergency Fund)" : 30
-    "مساهمات الأهداف المالية (Goals)" : 50
-    "مدخرات حرة غير مخصصة (Unallocated)" : 20
+pie title Planned Savings Distribution Per Cycle
+    "Emergency Fund" : 30
+    "Active Financial Goals" : 50
+    "Unallocated Liquid Savings" : 20
 ```
 
-### 3.5 المساعد المالي الذكي (AI Financial Chat & Voice)
-- **محادثة نصية وصوتية متخصصة**: إجابات مبنية على السياق المالي الفعلي للمستخدم (دخله، مصاريفه الحالية، أهدافه).
-- **تكامل n8n Webhook**: معالجة مركزية للنوايا (Intent Detection) وتوليد التوصيات والتحليلات.
-- **حماية المساعد**: تحديد معدل الرسائل (10 طلبات/دقيقة) لحماية الموارد من الاستهلاك المفرط.
+### 4.5 Intelligent AI Financial Assistant
+- **Context-Aware Dialogue**: The assistant analyzes current user financial metrics (income, expenses, active goals, and cycle health) to deliver customized, actionable guidance.
+- **n8n Workflow Pipelines**: External orchestration handles intent classification, multi-step prompt engineering, and structured responses.
+- **Rate-Limiting Protection**: Guarded at 10 requests per minute to prevent abuse while ensuring high availability.
 
-### 3.6 التحليلات والتحديات والتحفيز (Gamification & Insights)
-- **مركز التحليلات المالية**: مخططات ورسوم بيانية تفاعلية (`fl_chart`)، قياس معدل الادخار، وتتبع تغير السلوك المالي عبر الزمن.
-- **نظام التحديات والمكافآت**: تحديات يومية وأسبوعية وشهرية مع نقاط وشارات تميز ولوحة المتصدرين (**Leaderboard**).
-- **لمسات تفاعلية مميزة**: شاشة تقييم التجربة (**Rating Screen**) ونافذة تهنئة عيد الميلاد للمستخدم (**Birthday Celebration Dialog**).
+### 4.6 Gamification, Challenges & Social Insights
+- **Habit-Building Challenges**: Daily, weekly, and monthly challenges (e.g., zero-spend days, cooking at home, savings sprints).
+- **Rewards & Milestones**: Points system and achievement badges.
+- **Leaderboard**: Friendly anonymized rankings to motivate healthy financial habits.
+- **Celebration Delights**: In-app rating prompts and birthday celebration dialogs.
 
 ---
 
-## 🗄️ 4. هيكل قاعدة البيانات والمايجريشنز
+## 🗄️ 5. Database Architecture & Migrations
 
-### 4.1 مخطط العلاقات الكيانية (ER Diagram)
+### 5.1 Entity Relationship Diagram (ERD)
 
 ```mermaid
 erDiagram
@@ -241,193 +253,209 @@ erDiagram
     CHAT_SESSIONS ||--o{ CHAT_MESSAGES : contains
 ```
 
-### 4.2 سجل المايجريشنز التفصيلي (26 Migration)
+### 5.2 Migration Log (26 Iterative Schema Migrations)
 
-| رقم | اسم المايجريشن | الوظيفة التقنية |
-|:---:|----------------|-----------------|
-| **001-004** | `initial_schema_and_users` | إنشاء الجداول التأسيسية، المستخدمين والمصاريف |
-| **005** | `add_detected_tier_to_profiles` | تصنيف المستوى المالي للمستخدم تلقائياً |
-| **006** | `convert_cents_to_jod` | توحيد والتحويل الدقيق للمبالغ بالدينار الأردني (JOD) |
-| **007** | `add_multi_input_support` | دعم مصادر إدخال متعددة (Manual, Voice, OCR) |
-| **008** | `add_payment_method` | تتبع وسيلة الدفع (نقدي، بطاقة، محفظة) |
-| **009** | `phase1_goal_ledger` | إنشاء دفتر الأستاذ الدائم للأهداف المالية |
-| **010** | `post_deployment_goal_ledger_fks` | تعزيز قيود المفاتيح الأجنبية وسلامة البيانات |
-| **011** | `phase2_goal_planning` | دعم أوضاع التخطيط ومعاينة الأهداف المسبقة |
-| **012** | `phase2c_savings_allocations` | جدول توزيع واقتطاع المدخرات |
-| **013** | `add_personal_info_columns` | بيانات الملف الشخصي الإضافية وتاريخ الميلاد |
-| **014** | `phase3a_financial_cycles` | تأسيس جدول الدورات المالية وحالاتها |
-| **015** | `phase3a2_cycle_activity` | تتبع النشاط المالي لكل دورة |
-| **016** | `phase3a3_cycle_planning` | تخطيط مخصصات ومصروفات الدورة |
-| **017** | `phase3b_settlement` | تسوية الدورة المالية وإغلاقها |
-| **018** | `chat_ai_tables` | جداول جلسات ورسائل المساعد الذكي |
-| **019** | `chat_indexes` | تحسين سرعة وفهارس استرجاع محادثات الـ AI |
-| **020** | `reconcile_cycle_settlements` | مطابقة وإعادة مواءمة بيانات التسوية |
-| **021** | `add_system_managed_goal_identity` | هوية الأهداف التلقائية وصندوق الطوارئ |
-| **022** | `financial_analysis_history` | أرشفة تقارير التحليل المالي السابقة |
-| **023** | `add_notifications` | إدارة الإشعارات والتنبيهات |
-| **024** | `challenges_system` | جداول نظام التحديات والنقاط والمكافآت |
-| **025** | `fix_challenge_constraints` | تعديل وتحسين قيود التحديات |
-| **026** | `canonical_savings_accounting` | اعتماد المحاسبة القانونية الصارمة للمدخرات ومنع الازدواجية |
+| Migration # | Name | Technical Purpose |
+|:---:|---|---|
+| **001-004** | `initial_schema_and_users` | Foundational database tables, user management, and base schema |
+| **005** | `add_detected_tier_to_profiles` | Added financial tier classification to user profile schema |
+| **006** | `convert_cents_to_jod` | Standardized decimal currency conventions to Jordanian Dinar (JOD) |
+| **007** | `add_multi_input_support` | Multi-source input tracking (Manual, Voice, OCR) |
+| **008** | `add_payment_method` | Extended expense payment methods (Cash, Card, Digital Wallet) |
+| **009** | `phase1_goal_ledger` | Permanent audit ledger for financial goal contributions |
+| **010** | `post_deployment_goal_ledger_fks`| Enforced foreign key constraints and referential integrity |
+| **011** | `phase2_goal_planning` | Goal planning modes, preview APIs, and live calculation tables |
+| **012** | `phase2c_savings_allocations` | Savings allocation tracking table |
+| **013** | `add_personal_info_columns` | Extended profile metadata (Birth date, occupation, demographics) |
+| **014** | `phase3a_financial_cycles` | Core table for managing user financial cycle lifecycles |
+| **015** | `phase3a2_cycle_activity` | Real-time event log for cycle transactions and updates |
+| **016** | `phase3a3_cycle_planning` | Planning schema for cycle bucket distribution |
+| **017** | `phase3b_settlement` | Schema for cycle reconciliation, closing, and rollovers |
+| **018** | `chat_ai_tables` | Persistent sessions and messages for AI chat interactions |
+| **019** | `chat_indexes` | Performance indices for rapid conversational history retrieval |
+| **020** | `reconcile_cycle_settlements` | Reconciliation constraints and data consistency fixes |
+| **021** | `add_system_managed_goal_identity` | System-managed goals identity (Emergency Fund as managed goal) |
+| **022** | `financial_analysis_history` | Historical archive for comprehensive financial health audits |
+| **023** | `add_notifications` | User notification delivery and read status management |
+| **024** | `challenges_system` | Gamification tables (challenges, user participations, points) |
+| **025** | `fix_challenge_constraints` | Refined challenge participation uniqueness constraints |
+| **026** | `canonical_savings_accounting` | Canonical savings accounting enforcing zero double-counting |
 
 ---
 
-## 🧭 5. إدارة الحالة (State Management)
+## 🧭 6. State Management Architecture
 
-يعتمد التطبيق على معمارية **20 موفر حالة (Provider)** متخصصة لضمان فصل الاهتمامات وسرعة استجابة الشاشات:
+The mobile application utilizes **20 specialized Providers** to enforce separation of concerns, rapid UI redraws, and predictable reactive state flows:
 
 ```mermaid
 mindmap
   root((State Management Architecture))
-    المصادقة والتهيئة
+    Authentication & Setup
       AuthProvider
       OnboardingProvider
-    الإدارة المالية والدورات
+    Financial Management & Cycles
       CycleProvider
       FinancialProvider
       FinancialSetupProvider
       FinancialProfileProvider
       FinancialAnalysisProvider
-    العمليات والمعاملات
+    Operations & Transactions
       ExpenseProvider
       IncomeProvider
       GoalProvider
       ReceiptProvider
-    التحديات والمجتمع
+    Gamification & Social
       ChallengeProvider
       LeaderboardProvider
       RewardProvider
-    المساعد والإشعارات
+    Communication & Alerts
       ChatbotProvider
       NotificationProvider
-    الملف الشخصي والتفضيلات
+    User & Preferences
       ProfileProvider
       PersonalProvider
       ThemeProvider
       LanguageProvider
-    الرئيسية
+    Dashboard Hub
       HomeProvider
 ```
 
 ---
 
-## 🌐 6. هيكل الـ API والأمان
+## 🌐 7. API Architecture & Endpoints
 
-| الوحدة البرمجية | المسار الرئيسي | عدد الـ Endpoints | الوظيفة |
-|-----------------|----------------|:-----------------:|---------|
-| **Auth** | `/api/v1/auth` | 5 | تسجيل، دخول، تحقق OTP، واستعادة كلمة المرور |
-| **Onboarding** | `/api/v1/onboarding` | 4 | الإعداد المالي الأولي وتحديد المستويات |
-| **Finance** | `/api/v1/` | 25+ | المصاريف، الدخل، الأهداف، الالتزامات، والملف المالي |
-| **Cycles** | `/api/v1/financial-cycles` | 8 | إنشاء وبدء وتسوية وإغلاق الدورات المالية |
-| **Dashboard** | `/api/v1/dashboard` | 2 | جلب بيانات لوحة التحكم الشاملة |
-| **Receipts** | `/api/v1/receipts` | 2 | رفع ومعالجة الفواتير ومطابقة المسودات |
-| **Voice** | `/api/v1/voice` | 1 | استقبال التسجيل الصوتي وتحليله |
-| **AI Chat** | `/api/v1/chat` | 1 | المحادثة مع الذكاء الاصطناعي مع كامل السياق المالي |
-| **Analysis** | `/api/v1/financial-analysis` | 2 | توليد وجلب تقارير التحليل المالي |
-| **Notifications** | `/api/v1/notifications` | 3 | إدارة التنبيهات والإشعارات |
-| **Challenges** | `/api/v1/challenges` | 4 | التحديات والجوائز ولوحة المتصدرين |
-
----
-
-## 🏆 7. المزايا التنافسية
-
-| الميزة | AlphaV3 (ألفا) | التطبيقات المالية الأخرى |
-|--------|:-------------:|:------------------------:|
-| **إدخال صوتي ذكي بالذكاء الاصطناعي** | ✅ نعم (تحليل دقيق واستخراج تلقائي) | ❌ غير متوفر غالباً |
-| **مسح الفواتير بالـ OCR محلياً وسحابياً** | ✅ Google ML Kit + تطبيع تلقائي | ⚠️ محدود جداً أو مدفوع |
-| **مساعد مالي ذكي يعرف أرقامك الحقيقية** | ✅ سياق مالي متكامل عبر n8n | ⚠️ روبوتات أسئلة عامة فقط |
-| **نظام ميزانية بالدورات الشهرية الحقيقية** | ✅ يدعم تواريخ الراتب المتغيرة | ❌ تقويم شهري ميلادي جامد |
-| **تخصيص آلي للأهداف وصندوق الطوارئ** | ✅ اقتطاع ذري بدفتر أستاذ دائم | ⚠️ تتبع يدوي فقط |
-| **منع الازدواجية المالية (No Double Counting)** | ✅ معادلة محاسبية صارمة بقفل تزامني | ❌ تداخل في حساب الرصيد الحر |
-| **دعم حقيقي للسوق المحلي والعربي** | ✅ دعم كامل للدينار الأردني و RTL | ⚠️ عملات أجنبية وواجهات معربة جزئياً |
-| **نظام تحديات ومكافآت محفز** | ✅ Gamification كامل مع لوحة متصدرين | ⚠️ جداول وأرقام جافة |
+| Resource Domain | Base Path | Endpoints | Core Responsibility |
+|---|---|:---:|---|
+| **Authentication** | `/api/v1/auth` | 5 | Signup, signin, OTP verification, password reset |
+| **Onboarding** | `/api/v1/onboarding` | 4 | Initial financial questionnaire and tier determination |
+| **Finance** | `/api/v1/` | 25+ | Incomes, expenses, commitments, goals, and profiles |
+| **Cycles** | `/api/v1/financial-cycles` | 8 | Cycle creation, activation, settlement preview, closing |
+| **Dashboard** | `/api/v1/dashboard` | 2 | Aggregated cycle overview and real-time dashboard data |
+| **Receipt OCR** | `/api/v1/receipts` | 2 | Multi-part image upload, OCR processing, draft reconciliation |
+| **Voice Processing**| `/api/v1/voice` | 1 | Audio note analysis and financial entity extraction |
+| **AI Assistant** | `/api/v1/chat` | 1 | Context-rich conversational AI gateway |
+| **Analysis** | `/api/v1/financial-analysis` | 2 | Deep financial evaluation reports and historical reviews |
+| **Notifications** | `/api/v1/notifications` | 3 | In-app alerts, cycle deadline warnings, budget triggers |
+| **Challenges** | `/api/v1/challenges` | 4 | Challenges lifecycle, claimable rewards, and leaderboard |
 
 ---
 
-## 📦 8. إحصائيات المشروع وحجم الكود
+## 🏆 8. Competitive Advantages
+
+| Feature / Capability | AlphaV3 | Standard Finance Apps |
+|---|:---:|:---:|
+| **AI-Powered Smart Voice Logging** | ✅ Fully integrated (auto-extracts entity & amount) | ❌ Rarely available |
+| **On-Device Receipt OCR Scanner** | ✅ Google ML Kit + smart entity normalization | ⚠️ Limited / Paid add-on |
+| **Context-Aware Financial Assistant** | ✅ Understands real-time balances, cycles & goals | ⚠️ Generic chatbots only |
+| **Custom Financial Cycles (Flexible Paydays)** | ✅ Aligns with true salary cycles | ❌ Strict Gregorian month only |
+| **Automated Goal & Emergency Fund Allocation** | ✅ Atomic ledger deductions per cycle | ⚠️ Manual tracking only |
+| **Zero Double-Counting Guarantee** | ✅ Mathematical separation with row locks | ❌ Overlapping liquid balances |
+| **Dedicated Arab & Jordanian Market Support** | ✅ Native JOD currency & flawless RTL | ⚠️ Partial translations |
+| **Gamified Challenges & Leaderboard** | ✅ Interactive challenges, points & rankings | ⚠️ Dull, static charts |
+
+---
+
+## 📊 9. Codebase Statistics & Structure
 
 ```plaintext
 alphav3-mariam-ui/
 ├── backend/
-│   ├── src/services/       # 20 خدمة تغطي كافة المنطق المحاسبي (~240 KB)
-│   ├── src/controllers/    # 14 متحكم للطلبات (~38 KB)
-│   ├── src/routes/         # 13 مسار للـ Endpoints (~18 KB)
-│   ├── src/database/       # 26 مايجريشن (~100 KB)
-│   └── src/tests/          # اختبارات شاملة مع Vitest
+│   ├── src/services/       # 20 services managing all business domain logic (~240 KB)
+│   ├── src/controllers/    # 14 route controllers (~38 KB)
+│   ├── src/routes/         # 13 Express route definitions (~18 KB)
+│   ├── src/database/       # 26 SQL migrations & seeds (~100 KB)
+│   └── src/tests/          # Comprehensive Vitest unit & integration test suites
 │
 └── flutter/
-    ├── lib/screens/        # 30+ شاشة متكاملة (~750 KB)
-    ├── lib/providers/      # 20 Provider لإدارة الحالة (~165 KB)
-    ├── lib/services/       # 11 خدمة للشبكة والعتاد (~45 KB)
-    ├── lib/models/         # 18 نموذج للبيانات (~55 KB)
-    ├── lib/widgets/        # عناصر واجهة مخصصة وقابلة لإعادة الاستخدام (~50 KB)
-    └── assets/             # ترجمات ar/en كاملة وصور وأيقونات
+    ├── lib/screens/        # 30+ production screens (~750 KB)
+    ├── lib/providers/      # 20 state providers (~165 KB)
+    ├── lib/services/       # 11 native hardware & HTTP client services (~45 KB)
+    ├── lib/models/         # 18 strongly-typed data models (~55 KB)
+    ├── lib/widgets/        # Modular UI widgets and design system (~50 KB)
+    └── assets/             # Full Arabic / English localization files & image assets
 ```
 
 ---
 
-## 🚀 9. دليل التشغيل والتثبيت (Getting Started)
+## 🚀 10. Installation & Getting Started
 
-### المتطلبات الأساسية
+### Prerequisites
 - **Node.js** `>= 18.x`
 - **MySQL** `>= 8.0`
 - **Flutter SDK** `>= 3.0.0`
+- **Git**
 
 ---
 
-### أولاً: إعداد وتشغيل الخادم (Backend)
+### Step 1: Backend Setup
 
-1. الانتقال إلى مجلد الخادم:
+1. **Clone the repository and enter backend directory**:
    ```bash
-   cd backend
+   git clone https://github.com/mohammadbzoor/alphav3.git
+   cd alphav3/backend
    ```
-2. تثبيت الحزم والمكتبات:
+
+2. **Install dependencies**:
    ```bash
    npm install
    ```
-3. إعداد المتغيرات البيئية:
-   نسخ `.env.example` إلى `.env` وضبط بيانات الاتصال:
+
+3. **Configure Environment Variables**:
+   Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+   Set your MySQL credentials, JWT secret, and n8n webhook URL:
    ```env
    PORT=3000
    DB_HOST=localhost
    DB_USER=root
    DB_PASSWORD=your_password
    DB_NAME=alpha
-   JWT_SECRET=your_jwt_secret_key
+   JWT_SECRET=your_super_secret_jwt_key
    N8N_WEBHOOK_URL=https://your-n8n-instance/webhook/...
    ```
-4. تشغيل المايجريشنز لإنشاء الجداول:
+
+4. **Run Database Migrations**:
    ```bash
    node migrate.js
    ```
-5. بدء تشغيل الخادم:
+
+5. **Start Development Server**:
    ```bash
    npm run dev
    ```
+   The backend API will be live at `http://localhost:3000`.
 
 ---
 
-### ثانياً: إعداد وتشغيل تطبيق الموبايل (Flutter)
+### Step 2: Flutter Client Setup
 
-1. الانتقال إلى مجلد التطبيق:
+1. **Navigate to the Flutter project**:
    ```bash
-   cd flutter
+   cd ../flutter
    ```
-2. تحميل الحزم والاعتماديات:
+
+2. **Fetch dependencies**:
    ```bash
    flutter pub get
    ```
-3. ضبط رابط الخادم:
-   - للتشغيل المحلي، تأكد من عنوان الـ IP في [api_config.dart](flutter/lib/config/api_config.dart).
-4. تشغيل التطبيق على جهاز أو محاكي:
+
+3. **Configure API Endpoint**:
+   Inspect [api_config.dart](flutter/lib/config/api_config.dart) to toggle between:
+   - `AppEnvironment.local` (e.g. `http://10.0.2.2:3000` for Android Emulator or your local LAN IP)
+   - `AppEnvironment.production` (Cloud Render endpoint)
+
+4. **Run on Device or Emulator**:
    ```bash
    flutter run
    ```
 
 ---
 
-### ثالثاً: تشغيل الاختبارات الآلية (Testing)
+### Step 3: Running Tests
 
-يحتوي الخادم على اختبارات تكاملية ووحدية شاملة:
+The backend test suite verifies concurrency safety, zero double-counting, and API controllers:
 ```bash
 cd backend
 npm run test
@@ -435,16 +463,16 @@ npm run test
 
 ---
 
-## 🗺️ 10. خطة التطوير القادمة (Roadmap)
+## 🗺️ 11. Future Roadmap
 
-- [ ] **Phase 2B**: تنفيذ وتأكيد الأهداف المالية والمصاريف الرأسمالية وإعادة التخصيص الديناميكي.
-- [ ] **Push Notifications**: تفعيل إشعارات الدفع عبر Firebase Cloud Messaging.
-- [ ] **PDF Financial Reports**: تصدير كشوفات وتقارير مالية دورية بصيغة PDF.
-- [ ] **Open Banking Integration**: ربط وتتبع آلي مع الحسابات والمحافظ البنكية المحلية.
+- [ ] **Phase 2B Implementation**: Execution of goal purchases, capital expense tracking, and dynamic fund reallocation.
+- [ ] **Push Notifications**: Automated mobile alerts via Firebase Cloud Messaging (FCM).
+- [ ] **PDF Financial Reports**: Export periodic financial health audits and tax receipts to PDF.
+- [ ] **Open Banking API Integration**: Direct read-only synchronization with regional bank accounts and digital wallets.
 
 ---
 
-## 📄 الترخيص وفريق العمل (Authors & License)
+## 📄 License & Authors
 
-- **تطوير وإشراف**: محمد البزور (Mohammad Al Bzoor) وفريق العمل.
-- جميع الحقوق محفوظة © 2026.
+Developed and maintained by **Mohammad Al Bzoor** and contributors.  
+All rights reserved © 2026.
