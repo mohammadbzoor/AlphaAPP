@@ -1,11 +1,13 @@
+
 import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/core/utils/device.dart';
+import 'package:alpha_app/providers/chatbot_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/chat_model.dart';
-import '../../providers/chatbot_provider.dart';
 
 class ChatBubble extends StatelessWidget {
   final ChatModel message;
@@ -18,98 +20,158 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenW = Device.width(context);
-    final screenH = Device.height(context);
-    final themeprovider = Provider.of<Themeprovider>(context);
+
+    final themeProvider =
+        context.watch<Themeprovider>();
+
+    final isDark = themeProvider.isDark;
+
+    final primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
+    final textColor = isDark
+        ? AppColors.darkText
+        : AppColors.lightText;
+
+    final subTextColor = isDark
+        ? AppColors.darkSubText
+        : AppColors.lightSubText;
+
+    final cardColor = isDark
+        ? AppColors.darkCard
+        : AppColors.lightCard;
+
+    final borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
 
     return Align(
-      alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: message.isUser
+          ? AlignmentDirectional.centerEnd
+          : AlignmentDirectional.centerStart,
       child: Container(
-        margin: EdgeInsets.symmetric(
+        margin: const EdgeInsets.symmetric(
           vertical: 6,
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: 14,
-          vertical: 10,
+          vertical: 11,
         ),
-        constraints: const BoxConstraints(
-          maxWidth: 300,
+        constraints: BoxConstraints(
+          maxWidth: screenW * 0.78,
         ),
         decoration: BoxDecoration(
           color: message.isUser
-              ? (themeprovider.isDark
-                      ? AppColors.darkPrimary
-                      : AppColors.lightPrimary)
-                  .withOpacity(0.5)
-              : (themeprovider.isDark
-                      ? AppColors.darkSubText
-                      : AppColors.lightSubText)
-                  .withOpacity(.4),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft:
-                message.isUser ? const Radius.circular(16) : Radius.zero,
-            bottomRight:
-                message.isUser ? Radius.zero : const Radius.circular(16),
+              ? primaryColor.withOpacity(
+                  isDark ? 0.18 : 0.12,
+                )
+              : cardColor,
+          borderRadius: BorderRadiusDirectional.only(
+            topStart: const Radius.circular(17),
+            topEnd: const Radius.circular(17),
+            bottomStart: message.isUser
+                ? const Radius.circular(17)
+                : Radius.zero,
+            bottomEnd: message.isUser
+                ? Radius.zero
+                : const Radius.circular(17),
+          ),
+          border: Border.all(
+            color: message.isUser
+                ? primaryColor.withOpacity(0.35)
+                : borderColor,
           ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                message.message,
-                style: TextStyle(
-                    color: message.isUser
-                        ? themeprovider.isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.lightPrimary
-                        : themeprovider.isDark
-                            ? AppColors.darkSubText
-                            : AppColors.lightSubText,
-                    fontSize: screenW * 0.045,
-                    fontWeight: FontWeight.w500),
+            Text(
+              _getDisplayMessage(message.message),
+              textAlign: TextAlign.start,
+              style: TextStyle(
+                color: message.isUser
+                    ? primaryColor
+                    : textColor,
+                fontSize: screenW * 0.04,
+                fontWeight: FontWeight.w500,
+                height: 1.45,
               ),
             ),
-            SizedBox(
-              height: screenH * 0.01,
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "${message.time.hour.toString().padLeft(2, '0')}:${message.time.minute.toString().padLeft(2, '0')}",
-                  style: TextStyle(
-                      color: themeprovider.isDark
-                          ? AppColors.darkText
-                          : AppColors.lightText,
-                      fontSize: screenW * 0.03,
-                      fontWeight: FontWeight.w400),
-                ),
-                if (message.isUser && message.isPending) ...[
-                  const SizedBox(width: 8),
-                  const SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+
+            const SizedBox(height: 8),
+
+            Align(
+              alignment:
+                  AlignmentDirectional.centerEnd,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${message.time.hour.toString().padLeft(2, '0')}:'
+                    '${message.time.minute.toString().padLeft(2, '0')}',
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: screenW * 0.028,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
+
+                  if (message.isUser &&
+                      message.isPending) ...[
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ],
+
+                  if (message.isUser &&
+                      message.isFailed) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        final chatbotProvider =
+                            context.read<
+                                ChatbotProvider>();
+
+                        chatbotProvider
+                            .retryMessage(message);
+                      },
+                      child: Icon(
+                        Icons.refresh_rounded,
+                        color: isDark
+                            ? AppColors.darkError
+                            : AppColors.lightError,
+                        size: 17,
+                      ),
+                    ),
+                  ],
                 ],
-                if (message.isUser && message.isFailed) ...[
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      final chatbotProvider = Provider.of<ChatbotProvider>(context, listen: false);
-                      chatbotProvider.retryMessage(message);
-                    },
-                    child: const Icon(Icons.refresh, color: Colors.red, size: 16),
-                  ),
-                ],
-              ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  String _getDisplayMessage(String rawMessage) {
+    if (rawMessage.isEmpty) return '';
+    if (rawMessage.contains(' ') || rawMessage.contains('\n')) {
+      return rawMessage;
+    }
+    try {
+      final String trValue = rawMessage.tr();
+      return trValue;
+    } catch (_) {
+      return rawMessage;
+    }
+  }
 }
+

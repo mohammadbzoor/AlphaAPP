@@ -1,4 +1,5 @@
 import 'package:alpha_app/core/utils/app_colors.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -37,24 +38,28 @@ class PriorityCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.priority_high_rounded,
-                color:
-                    isDark ? AppColors.darkSecondary : AppColors.lightSecondary,
+                color: isDark
+                    ? AppColors.darkSecondary
+                    : AppColors.lightSecondary,
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  "How important is this goal?",
+                  'priority_card.importance'.tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
+                    color:
+                        isDark ? AppColors.darkText : AppColors.lightText,
                     fontSize: screenW * 0.035,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               Text(
-                "$priority / 10",
+                '$priority / 10',
                 style: GoogleFonts.ibmPlexSansArabic(
-                  color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                  color: isDark
+                      ? AppColors.darkAccent
+                      : AppColors.lightAccent,
                   fontSize: screenW * 0.038,
                   fontWeight: FontWeight.bold,
                 ),
@@ -67,8 +72,9 @@ class PriorityCard extends StatelessWidget {
             max: 10,
             divisions: 9,
             label: priority.toString(),
-            activeColor:
-                isDark ? AppColors.darkSecondary : AppColors.lightSecondary,
+            activeColor: isDark
+                ? AppColors.darkSecondary
+                : AppColors.lightSecondary,
             inactiveColor: isDark
                 ? AppColors.darkSubText.withOpacity(0.25)
                 : AppColors.lightSubText.withOpacity(0.25),

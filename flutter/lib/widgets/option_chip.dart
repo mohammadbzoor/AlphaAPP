@@ -5,9 +5,7 @@ import 'package:provider/provider.dart';
 
 class OptionChip extends StatelessWidget {
   final List<String> items;
-
   final String? selected;
-
   final Function(String) onTap;
 
   const OptionChip({
@@ -19,83 +17,68 @@ class OptionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeprovider = Provider.of<Themeprovider>(context);
+    final themeProvider = context.watch<Themeprovider>();
+    final isDark = themeProvider.isDark;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 2.0),
-      child: Row(
-        children: items.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
+    final primaryColor =
+        isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+
+    final textColor =
+        isDark ? AppColors.darkText : AppColors.lightText;
+
+    final borderColor =
+        isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
+    final cardColor =
+        isDark ? AppColors.darkCard : AppColors.lightCard;
+
+    return SizedBox(
+      height: 50,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          final item = items[index];
           final isSelected = item == selected;
 
-          return Padding(
-            padding:
-                EdgeInsets.only(right: index != items.length - 1 ? 10.0 : 0),
-            child: GestureDetector(
-              onTap: () {
-                onTap(item);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
+          return InkWell(
+            onTap: () => onTap(item),
+            borderRadius: BorderRadius.circular(14),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? primaryColor.withOpacity(0.12)
+                    : cardColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  width: isSelected ? 1.6 : 1,
                   color: isSelected
-                      ? (themeprovider.isDark
-                              ? AppColors.darkSecondary
-                              : AppColors.lightSecondary)
-                          .withValues(alpha: 0.04)
-                      : (themeprovider.isDark
-                              ? AppColors.darkSubText
-                              : AppColors.lightSubText)
-                          .withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    width: 1.5,
-                    color: isSelected
-                        ? themeprovider.isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.lightPrimary
-                        : Colors.transparent,
-                  ),
+                      ? primaryColor
+                      : borderColor,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isSelected) ...[
-                      Icon(
-                        Icons.check,
-                        size: 16,
-                        color: themeprovider.isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.lightPrimary,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      item,
-                      maxLines: 1,
-                      overflow: TextOverflow.visible,
-                      style: TextStyle(
-                        color: isSelected
-                            ? themeprovider.isDark
-                                ? AppColors.darkPrimary
-                                : AppColors.lightPrimary
-                            : (themeprovider.isDark
-                                ? AppColors.darkSubText
-                                : AppColors.lightSubText),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              ),
+              child: Center(
+                child: Text(
+                  item,
+                  style: TextStyle(
+                    color: isSelected
+                        ? primaryColor
+                        : textColor,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.w600,
+                  ),
                 ),
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }

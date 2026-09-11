@@ -3,6 +3,7 @@ import 'package:alpha_app/providers/auth_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
 import 'package:alpha_app/screens/auth/login.dart';
 import 'package:alpha_app/widgets/app_button.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -22,10 +23,11 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  bool _obscureText = true;
-  bool _obscureConfirmText = true;
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+
+  bool _obscureText = true;
+  bool _obscureConfirmText = true;
 
   @override
   void dispose() {
@@ -33,220 +35,596 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
-  void _submit(AuthProvider authProvider, BuildContext context) async {
-    if (authProvider.isLoading) return;
-
-    final newPass = authProvider.newPasswordController.text;
-    final confPass = _confirmPasswordController.text;
-
-    if (newPass.isEmpty || confPass.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Both password fields are required'),
-            backgroundColor: Colors.red),
-      );
+  Future<void> _submit(
+    AuthProvider authProvider,
+    BuildContext context,
+  ) async {
+    if (authProvider.isLoading) {
       return;
     }
 
-    if (newPass != confPass) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Passwords do not match'),
-            backgroundColor: Colors.red),
+    FocusScope.of(context).unfocus();
+
+    final String newPass = authProvider.newPasswordController.text.trim();
+
+    final String confirmPass = _confirmPasswordController.text.trim();
+
+    if (newPass.isEmpty || confirmPass.isEmpty) {
+      _showMessage(
+        context,
+        message: 'reset_password.both_required'.tr(),
+        isError: true,
       );
+
       return;
     }
 
-    // Password policy validation (at least 8 chars, 1 uppercase, 1 lowercase, 1 number)
+    if (newPass != confirmPass) {
+      _showMessage(
+        context,
+        message: 'reset_password.passwords_not_match'.tr(),
+        isError: true,
+      );
+
+      return;
+    }
+
     if (newPass.length < 8 ||
         !RegExp(r'[A-Z]').hasMatch(newPass) ||
         !RegExp(r'[a-z]').hasMatch(newPass) ||
         !RegExp(r'\d').hasMatch(newPass)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                'Password must be at least 8 characters and contain uppercase, lowercase, and numbers'),
-            backgroundColor: Colors.red),
+      _showMessage(
+        context,
+        message: 'reset_password.password_invalid'.tr(),
+        isError: true,
       );
+
       return;
     }
 
-    final success = await authProvider.resetPassword(
+    final bool success = await authProvider.resetPassword(
       otpCode: widget.otpCode,
       newPassword: newPass,
     );
-    if (success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset successfully')),
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (success) {
+      _showMessage(
+        context,
+        message: 'reset_password.reset_success'.tr(),
+        isError: false,
       );
+
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const Login()),
+        MaterialPageRoute(
+          builder: (_) => const Login(),
+        ),
         (route) => false,
       );
     }
   }
 
+  void _showMessage(
+    BuildContext context, {
+    required String message,
+    required bool isError,
+  }) {
+    final Themeprovider themeProvider = context.read<Themeprovider>();
+
+    final bool isDark = themeProvider.isDark;
+
+    final Color errorColor =
+        isDark ? AppColors.darkError : AppColors.lightError;
+
+    final Color successColor =
+        isDark ? AppColors.darkSecondary : AppColors.lightSecondary;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: GoogleFonts.ibmPlexSansArabic(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: isError ? errorColor : successColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final screenH = MediaQuery.of(context).size.height;
-    final themeprovider = Provider.of<Themeprovider>(context);
-    final isDark = themeprovider.isDark;
-    final authProvider = Provider.of<AuthProvider>(context);
+    final Size screenSize = MediaQuery.sizeOf(context);
+
+    final double screenW = screenSize.width;
+
+    final double screenH = screenSize.height;
+
+    final Themeprovider themeProvider = context.watch<Themeprovider>();
+
+    final AuthProvider authProvider = context.watch<AuthProvider>();
+
+    final bool isDark = themeProvider.isDark;
+
+    final Color backgroundColor =
+        isDark ? AppColors.darkBackground : AppColors.lightBackground;
+
+    final Color textColor = isDark ? AppColors.darkText : AppColors.lightText;
+
+    final Color subTextColor =
+        isDark ? AppColors.darkSubText : AppColors.lightSubText;
+
+    final Color primaryColor =
+        isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+
+    final Color secondaryColor =
+        isDark ? AppColors.darkSecondary : AppColors.lightSecondary;
+
+    final Color cardColor = isDark ? AppColors.darkCard : AppColors.lightCard;
+
+    final Color borderColor =
+        isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
+    final Color errorColor =
+        isDark ? AppColors.darkError : AppColors.lightError;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDark ? AppColors.darkText : AppColors.lightText),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      resizeToAvoidBottomInset: true,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          physics: const BouncingScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            screenW * 0.06,
+            screenH * 0.025,
+            screenW * 0.06,
+            MediaQuery.of(context).viewInsets.bottom + screenH * 0.04,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: screenH * 0.05),
-              Text(
-                'Reset Password',
-                style: GoogleFonts.ibmPlexSansArabic(
-                  color: isDark ? AppColors.darkText : AppColors.lightText,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Please enter your new password.',
-                style: GoogleFonts.ibmPlexSansArabic(
-                  color:
-                      isDark ? AppColors.darkSubText : AppColors.lightSubText,
-                  fontSize: 16,
-                ),
-              ),
-              SizedBox(height: screenH * 0.05),
-              Container(
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color:
-                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                  ),
-                ),
-                child: TextField(
-                  controller: authProvider.newPasswordController,
-                  obscureText: _obscureText,
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
-                  ),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      Icons.lock_outline,
-                      color: isDark
-                          ? AppColors.darkSecondary
-                          : AppColors.lightSecondary,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureText ? Icons.visibility_off : Icons.visibility,
-                        color: isDark
-                            ? AppColors.darkSecondary
-                            : AppColors.lightSecondary,
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: InkWell(
+                  onTap: authProvider.isLoading
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                        },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    width: screenW * 0.12,
+                    height: screenW * 0.12,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(
+                        isDark ? 0.12 : 0.08,
                       ),
-                      onPressed: () {
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: primaryColor.withOpacity(
+                          0.22,
+                        ),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: primaryColor,
+                      size: screenW * 0.065,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: screenH * 0.035,
+              ),
+              Center(
+                child: Container(
+                  width: screenW * 0.24,
+                  height: screenW * 0.24,
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(
+                      0.10,
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: primaryColor.withOpacity(
+                        0.25,
+                      ),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.lock_reset_rounded,
+                    color: primaryColor,
+                    size: screenW * 0.12,
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: screenH * 0.032,
+              ),
+              Center(
+                child: Text(
+                  'reset_password.title'.tr(),
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.ibmPlexSansArabic(
+                    color: textColor,
+                    fontSize: screenW * 0.072,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: screenH * 0.012,
+              ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: screenW * 0.82,
+                  ),
+                  child: Text(
+                    'reset_password.description'.tr(),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.ibmPlexSansArabic(
+                      color: subTextColor,
+                      fontSize: screenW * 0.04,
+                      fontWeight: FontWeight.w500,
+                      height: 1.55,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: screenH * 0.04,
+              ),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.fromLTRB(
+                  screenW * 0.04,
+                  screenH * 0.026,
+                  screenW * 0.04,
+                  screenH * 0.026,
+                ),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(
+                    0.04,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: primaryColor.withOpacity(
+                      0.55,
+                    ),
+                  ),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.035),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _FieldTitle(
+                      title: 'reset_password.new_password'.tr(),
+                      textColor: subTextColor,
+                      screenW: screenW,
+                    ),
+                    SizedBox(
+                      height: screenH * 0.01,
+                    ),
+                    _PasswordField(
+                      controller: authProvider.newPasswordController,
+                      hint: 'reset_password.enter_new_password'.tr(),
+                      obscureText: _obscureText,
+                      isLoading: authProvider.isLoading,
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      primaryColor: primaryColor,
+                      secondaryColor: secondaryColor,
+                      borderColor: borderColor,
+                      onVisibilityPressed: () {
                         setState(() {
                           _obscureText = !_obscureText;
                         });
                       },
                     ),
-                    hintText: 'New Password',
-                    hintStyle: GoogleFonts.ibmPlexSansArabic(
-                      color: isDark
-                          ? AppColors.darkSubText
-                          : AppColors.lightSubText,
+                    SizedBox(
+                      height: screenH * 0.022,
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                  ),
-                ),
-              ),
-              SizedBox(height: screenH * 0.02),
-              Container(
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color:
-                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                  ),
-                ),
-                child: TextField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmText,
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
-                  ),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      Icons.lock_outline,
-                      color: isDark
-                          ? AppColors.darkSecondary
-                          : AppColors.lightSecondary,
+                    _FieldTitle(
+                      title: 'reset_password.confirm_password'.tr(),
+                      textColor: subTextColor,
+                      screenW: screenW,
                     ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmText
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: isDark
-                            ? AppColors.darkSecondary
-                            : AppColors.lightSecondary,
-                      ),
-                      onPressed: () {
+                    SizedBox(
+                      height: screenH * 0.01,
+                    ),
+                    _PasswordField(
+                      controller: _confirmPasswordController,
+                      hint: 'reset_password.confirm_new_password'.tr(),
+                      obscureText: _obscureConfirmText,
+                      isLoading: authProvider.isLoading,
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      primaryColor: primaryColor,
+                      secondaryColor: secondaryColor,
+                      borderColor: borderColor,
+                      onSubmitted: (_) {
+                        _submit(
+                          authProvider,
+                          context,
+                        );
+                      },
+                      onVisibilityPressed: () {
                         setState(() {
                           _obscureConfirmText = !_obscureConfirmText;
                         });
                       },
                     ),
-                    hintText: 'Confirm New Password',
-                    hintStyle: GoogleFonts.ibmPlexSansArabic(
-                      color: isDark
-                          ? AppColors.darkSubText
-                          : AppColors.lightSubText,
+                    SizedBox(
+                      height: screenH * 0.02,
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                  ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(
+                        14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkAccent.withOpacity(
+                                0.06,
+                              )
+                            : AppColors.lightAccent.withOpacity(
+                                0.06,
+                              ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkAccent
+                              : AppColors.lightAccent,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: isDark
+                                ? AppColors.darkAccent
+                                : AppColors.lightAccent,
+                            size: 20,
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Expanded(
+                            child: Text(
+                              'reset_password.password_hint'.tr(),
+                              style: GoogleFonts.ibmPlexSansArabic(
+                                color: isDark
+                                    ? AppColors.darkAccent
+                                    : AppColors.lightAccent,
+                                fontSize: 13,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (authProvider.errorMessage != null) ...[
+                      SizedBox(
+                        height: screenH * 0.018,
+                      ),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: errorColor.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(
+                            12,
+                          ),
+                          border: Border.all(
+                            color: errorColor.withOpacity(0.30),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              size: 20,
+                              color: errorColor,
+                            ),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            Expanded(
+                              child: Text(
+                                authProvider.errorMessage!,
+                                style: GoogleFonts.ibmPlexSansArabic(
+                                  color: errorColor,
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              if (authProvider.errorMessage != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  authProvider.errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ],
-              SizedBox(height: screenH * 0.05),
               SizedBox(
+                height: screenH * 0.04,
+              ),
+              AppButton(
+                text: 'reset_password.button'.tr(),
+                isDark: isDark,
+                isLoading: authProvider.isLoading,
                 width: double.infinity,
-                child: AppButton(
-                  text: 'Reset Password',
-                  isDark: isDark,
-                  onPressed: () => _submit(authProvider, context),
-                  isLoading: authProvider.isLoading,
-                ),
+                height: 56,
+                onPressed: () {
+                  _submit(
+                    authProvider,
+                    context,
+                  );
+                },
+              ),
+              SizedBox(
+                height: screenH * 0.025,
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldTitle extends StatelessWidget {
+  final String title;
+  final Color textColor;
+  final double screenW;
+
+  const _FieldTitle({
+    required this.title,
+    required this.textColor,
+    required this.screenW,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsetsDirectional.only(
+        start: screenW * 0.01,
+      ),
+      child: Text(
+        title,
+        style: GoogleFonts.ibmPlexSansArabic(
+          color: textColor,
+          fontSize: screenW * 0.038,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _PasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool obscureText;
+  final bool isLoading;
+
+  final Color cardColor;
+  final Color textColor;
+  final Color subTextColor;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color borderColor;
+
+  final VoidCallback onVisibilityPressed;
+  final ValueChanged<String>? onSubmitted;
+
+  const _PasswordField({
+    required this.controller,
+    required this.hint,
+    required this.obscureText,
+    required this.isLoading,
+    required this.cardColor,
+    required this.textColor,
+    required this.subTextColor,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.borderColor,
+    required this.onVisibilityPressed,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      enabled: !isLoading,
+      keyboardType: TextInputType.visiblePassword,
+      textInputAction:
+          onSubmitted == null ? TextInputAction.next : TextInputAction.done,
+      onSubmitted: onSubmitted,
+      style: GoogleFonts.ibmPlexSansArabic(
+        color: textColor,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: cardColor,
+        hintText: hint,
+        hintStyle: GoogleFonts.ibmPlexSansArabic(
+          color: subTextColor,
+          fontSize: 14,
+        ),
+        prefixIcon: Icon(
+          Icons.lock_outline_rounded,
+          color: secondaryColor,
+        ),
+        suffixIcon: IconButton(
+          onPressed: isLoading ? null : onVisibilityPressed,
+          icon: Icon(
+            obscureText
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            color: secondaryColor,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: borderColor,
+          ),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: borderColor.withOpacity(0.6),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: primaryColor,
+            width: 2,
+          ),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
     );

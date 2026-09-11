@@ -1,4 +1,5 @@
 import 'package:alpha_app/core/utils/app_colors.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -32,24 +33,24 @@ class QuickActionsGrid extends StatelessWidget {
       childAspectRatio: 1.05,
       children: [
         QuickActionCard(
-          title: 'Add Expense',
-          subtitle: 'Track your spending',
+          title: 'quick_actions.add_expense'.tr(),
+          subtitle: 'quick_actions.track_spending'.tr(),
           icon: Icons.account_balance_wallet_outlined,
           iconColor: isDark ? AppColors.darkError : AppColors.lightError,
           isDark: isDark,
           onTap: onAddExpense,
         ),
         QuickActionCard(
-          title: 'Analytics',
-          subtitle: 'View spending trends',
+          title: 'quick_actions.analytics'.tr(),
+          subtitle: 'quick_actions.view_spending_trends'.tr(),
           icon: Icons.bar_chart_rounded,
           iconColor: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
           isDark: isDark,
           onTap: onAnalytics,
         ),
         QuickActionCard(
-          title: 'Scan Receipt',
-          subtitle: 'Capture expenses',
+          title: 'quick_actions.scan_receipt'.tr(),
+          subtitle: 'quick_actions.capture_expenses'.tr(),
           icon: Icons.document_scanner_outlined,
           iconColor:
               isDark ? AppColors.darkSecondary : AppColors.lightSecondary,
@@ -57,16 +58,16 @@ class QuickActionsGrid extends StatelessWidget {
           onTap: onScanReceipt,
         ),
         QuickActionCard(
-          title: 'Challenges',
-          subtitle: 'Build good habits',
+          title: 'quick_actions.challenges'.tr(),
+          subtitle: 'quick_actions.build_good_habits'.tr(),
           icon: Icons.emoji_events_outlined,
           iconColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
           isDark: isDark,
           onTap: onChallenges,
         ),
         QuickActionCard(
-          title: 'Emergency Fund',
-          subtitle: 'Manage safety net',
+          title: 'quick_actions.emergency_fund'.tr(),
+          subtitle: 'quick_actions.manage_safety_net'.tr(),
           icon: Icons.health_and_safety_outlined,
           iconColor: isDark ? Colors.tealAccent : Colors.teal,
           isDark: isDark,

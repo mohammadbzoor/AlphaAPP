@@ -6,11 +6,88 @@ import 'package:alpha_app/providers/themeprovider.dart';
 import 'package:alpha_app/widgets/custom_textfield.dart';
 import 'package:alpha_app/core/utils/step_resolver.dart';
 import 'package:alpha_app/widgets/option_chip.dart';
+import 'package:alpha_app/widgets/multi_select_chip.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
+
+
+String _translatedFinancialItem(BuildContext context, String value) {
+  if (context.locale.languageCode != "ar") {
+    return value == "Temporary Job" ? "Recurring Side Income" : value;
+  }
+
+  const arabicByValue = <String, String>{
+    "Temporary Job": "دخل جانبي متكرر",
+    "Recurring Side Income": "دخل جانبي متكرر",
+    "Family Support": "دعم عائلي",
+    "External Support": "دعم خارجي",
+    "Rent Income": "دخل إيجار",
+    "Other": "أخرى",
+    "Education": "التعليم",
+    "House Rent": "إيجار المنزل",
+    "Loan": "القروض",
+    "Bills": "الفواتير",
+    "Treatment": "العلاج",
+    "Saving": "الادخار",
+    "Food": "الطعام",
+    "Transportation": "المواصلات",
+    "Shopping": "التسوق",
+    "Entertainment": "الترفيه",
+    "Personal Care": "العناية الشخصية",
+  };
+
+  return arabicByValue[value] ?? value;
+}
+
+String _translatedMoneyRelationship(BuildContext context, String value) {
+  const keyByValue = <String, String>{
+    "Careful spending": "careful_spending",
+    "Balanced spending": "balanced_spending",
+    "Emotional spending": "emotional_spending",
+  };
+  return keyByValue[value]?.tr() ?? value;
+}
+
+String _moneyRelationshipFromDisplay(BuildContext context, String display) {
+  const values = <String>[
+    "Careful spending",
+    "Balanced spending",
+    "Emotional spending",
+  ];
+  return values.firstWhere(
+    (value) => _translatedMoneyRelationship(context, value) == display,
+    orElse: () => display,
+  );
+}
+
+String _translatedMainGoal(BuildContext context, String value) {
+  const keyByValue = <String, String>{
+    "Saving": "saving",
+    "Debt payment": "debt_payment",
+    "Daily budget": "daily_budget",
+    "Emergency fund": "emergency_fund",
+    "Other": "other",
+  };
+  return keyByValue[value]?.tr() ?? value;
+}
+
+String _mainGoalFromDisplay(BuildContext context, String display) {
+  const values = <String>[
+    "Saving",
+    "Debt payment",
+    "Daily budget",
+    "Emergency fund",
+    "Other",
+  ];
+  return values.firstWhere(
+    (value) => _translatedMainGoal(context, value) == display,
+    orElse: () => display,
+  );
+}
 
 class FinancialSetupScreen extends StatefulWidget {
   const FinancialSetupScreen({super.key});
@@ -47,7 +124,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Select Salary Payment Day",
+                      "select_salary_payment_day".tr(),
                       style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -66,7 +143,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Choose the day you usually receive your salary.",
+                  "salary_payment_day_description".tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 14,
                     color:
@@ -94,7 +171,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Semantics(
-                        label: "Salary payment day $day",
+                        label: "${"salary_payment_day_semantics".tr()} $day",
                         child: Container(
                           decoration: BoxDecoration(
                             color: isSelected
@@ -157,14 +234,18 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
           isDark ? AppColors.darkBackground : AppColors.lightBackground,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-              horizontal: screenW * 0.05, vertical: screenH * 0.03),
+          padding: EdgeInsets.fromLTRB(
+            screenW * 0.055,
+            screenH * 0.025,
+            screenW * 0.055,
+            screenH * 0.035,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. Title and Progress
               Text(
-                "Step 2 of 2",
+                "financial_step".tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: screenW * 0.04,
                   fontWeight: FontWeight.w500,
@@ -173,7 +254,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               ),
               SizedBox(height: screenH * 0.02),
               Text(
-                "Financial Information",
+                "financial_information".tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: screenW * 0.075,
                   fontWeight: FontWeight.bold,
@@ -182,7 +263,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               ),
               SizedBox(height: screenH * 0.01),
               Text(
-                "Accurate data means sharper advice from Alpha",
+                "financial_information_subtitle".tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                   fontSize: screenW * 0.035,
                   fontWeight: FontWeight.w500,
@@ -192,8 +273,8 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               ),
               SizedBox(height: screenH * 0.02),
               LinearPercentIndicator(
-                lineHeight: screenH * 0.02,
-                percent: financialProvider.pageProgress,
+                lineHeight: screenH * 0.015,
+                percent: financialProvider.pageProgress.clamp(0.0, 1.0),
                 padding: EdgeInsets.zero,
                 backgroundColor:
                     isDark ? AppColors.darkBorder : AppColors.lightBorder,
@@ -204,26 +285,38 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.03),
 
               // 2. Relationship with money
-              _SectionTitle("How do you describe your relationship with money?",
+              _SectionTitle("relationship_with_money".tr(),
                   isDark: isDark, screenW: screenW),
               SizedBox(height: screenH * 0.01),
               OptionChip(
                 items: const [
                   "Careful spending",
                   "Balanced spending",
-                  "Emotional spending"
-                ],
-                selected: financialProvider.moneyRelationshipDisplay,
-                onTap: financialProvider.setMoneyRelationship,
+                  "Emotional spending",
+                ]
+                    .map((value) =>
+                        _translatedMoneyRelationship(context, value))
+                    .toList(),
+                selected: financialProvider.moneyRelationshipDisplay == null
+                    ? null
+                    : _translatedMoneyRelationship(
+                        context,
+                        financialProvider.moneyRelationshipDisplay!,
+                      ),
+                onTap: (displayValue) {
+                  financialProvider.setMoneyRelationship(
+                    _moneyRelationshipFromDisplay(context, displayValue),
+                  );
+                },
               ),
               SizedBox(height: screenH * 0.03),
 
               // 3. Regular Monthly Salary
-              _SectionTitle("Regular Monthly Salary",
+              _SectionTitle("regular_monthly_salary".tr(),
                   isDark: isDark, screenW: screenW),
               const SizedBox(height: 4),
               Text(
-                "Enter the fixed salary you expect to receive each month.",
+                "regular_salary_description".tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 13,
                     color: isDark
@@ -233,7 +326,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.01),
               CustomTextfield(
                 controller: financialProvider.regularSalaryController,
-                hint: "Enter monthly salary",
+                hint: "enter_monthly_salary".tr(),
                 type: TextFieldType.number,
                 inputFormatters: [_decimalFormatter],
                 suffix: const Padding(
@@ -243,11 +336,11 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.03),
 
               // 4. Additional Expected Monthly Income
-              _SectionTitle("Additional Expected Monthly Income",
+              _SectionTitle("additional_monthly_income".tr(),
                   isDark: isDark, screenW: screenW),
               const SizedBox(height: 4),
               Text(
-                "Enter only income that is separate from your regular salary and expected every month.",
+                "additional_income_description".tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 13,
                     color: isDark
@@ -255,56 +348,35 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                         : AppColors.lightSubText),
               ),
               SizedBox(height: screenH * 0.01),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: Row(
-                  children: financialProvider.incomeSources
-                      .asMap()
-                      .entries
-                      .map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          right: index !=
-                                  financialProvider.incomeSources.length - 1
-                              ? 10.0
-                              : 0),
-                      child: ChoiceChip(
-                        label: Text(item.name == "Temporary Job"
-                            ? "Recurring Side Income"
-                            : item.name),
-                        selected: item.selected,
-                        onSelected: (_) => financialProvider.toggleIncome(item),
-                        selectedColor: (isDark
-                                ? AppColors.darkSecondary
-                                : AppColors.lightSecondary)
-                            .withValues(alpha: 0.04),
-                        backgroundColor: (isDark
-                                ? AppColors.darkSubText
-                                : AppColors.lightSubText)
-                            .withValues(alpha: 0.4),
-                        side: BorderSide(
-                          color: item.selected
-                              ? (isDark
-                                  ? AppColors.darkPrimary
-                                  : AppColors.lightPrimary)
-                              : Colors.transparent,
+              MultiSelectChip(
+                items: financialProvider.incomeSources
+                    .map((item) => _translatedFinancialItem(context, item.name))
+                    .toList(),
+                selectedItems: financialProvider.incomeSources
+                    .where((item) => item.selected)
+                    .map((item) => _translatedFinancialItem(context, item.name))
+                    .toList(),
+                onTap: (displayName) {
+                  final displayedItems = financialProvider.incomeSources
+                      .map(
+                        (source) => _translatedFinancialItem(
+                          context,
+                          source.name,
                         ),
-                        labelStyle: TextStyle(
-                          color: item.selected
-                              ? (isDark
-                                  ? AppColors.darkPrimary
-                                  : AppColors.lightPrimary)
-                              : (isDark
-                                  ? AppColors.darkSubText
-                                  : AppColors.lightSubText),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                      )
+                      .toList();
+
+                  final selectedIndex =
+                      displayedItems.indexOf(displayName);
+
+                  if (selectedIndex == -1) {
+                    return;
+                  }
+
+                  financialProvider.toggleIncome(
+                    financialProvider.incomeSources[selectedIndex],
+                  );
+                },
               ),
               SizedBox(height: screenH * 0.01),
               ...financialProvider.incomeSources
@@ -314,7 +386,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                   padding: const EdgeInsets.only(bottom: 10.0),
                   child: CustomTextfield(
                     controller: item.controller,
-                    hint: "Additional monthly amount",
+                    hint: "additional_monthly_amount".tr(),
                     type: TextFieldType.number,
                     inputFormatters: [_decimalFormatter],
                     suffix: const Padding(
@@ -332,20 +404,20 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: (isDark
-                          ? AppColors.darkSecondary
-                          : AppColors.lightSecondary)
+                          ? AppColors.darkAccent.withOpacity(0.4)
+                          : AppColors.lightAccent.withOpacity(0.4))
                       .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                       color: isDark
-                          ? AppColors.darkSecondary
-                          : AppColors.lightSecondary),
+                          ? AppColors.darkAccent
+                          : AppColors.lightAccent),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Expected Monthly Income:",
+                      "${"expected_monthly_income".tr()}:",
                       style: GoogleFonts.ibmPlexSansArabic(
                           fontSize: 16,
                           color: isDark
@@ -364,7 +436,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "This total includes your salary and separate recurring monthly income only.",
+                      "expected_income_note".tr(),
                       style: GoogleFonts.ibmPlexSansArabic(
                           fontSize: 12,
                           color: isDark
@@ -377,7 +449,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.03),
 
               // 6. Salary Payment Day
-              _SectionTitle("Salary Payment Day",
+              _SectionTitle("salary_payment_day".tr(),
                   isDark: isDark, screenW: screenW),
               SizedBox(height: screenH * 0.01),
               InkWell(
@@ -401,8 +473,8 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                     children: [
                       Text(
                         financialProvider.paymentDay != null
-                            ? "Day ${financialProvider.paymentDay}"
-                            : "Select salary day",
+                            ? "${"day".tr()} ${financialProvider.paymentDay}"
+                            : "select_salary_day".tr(),
                         style: GoogleFonts.ibmPlexSansArabic(
                           fontSize: 16,
                           color: financialProvider.paymentDay != null
@@ -425,56 +497,38 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.03),
 
               // 7. Fixed Monthly Expenses
-              _SectionTitle("Fixed Monthly Expenses",
+              _SectionTitle("fixed_monthly_expenses".tr(),
                   isDark: isDark, screenW: screenW),
               SizedBox(height: screenH * 0.01),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: Row(
-                  children: financialProvider.fixedExpenses
-                      .asMap()
-                      .entries
-                      .map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          right: index !=
-                                  financialProvider.fixedExpenses.length - 1
-                              ? 10.0
-                              : 0),
-                      child: ChoiceChip(
-                        label: Text(item.name),
-                        selected: item.selected,
-                        onSelected: (_) =>
-                            financialProvider.toggleExpense(item),
-                        selectedColor: (isDark
-                                ? AppColors.darkSecondary
-                                : AppColors.lightSecondary)
-                            .withValues(alpha: 0.04),
-                        backgroundColor: (isDark
-                                ? AppColors.darkSubText
-                                : AppColors.lightSubText)
-                            .withValues(alpha: 0.4),
-                        side: BorderSide(
-                            color: item.selected
-                                ? (isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.lightPrimary)
-                                : Colors.transparent),
-                        labelStyle: TextStyle(
-                            color: item.selected
-                                ? (isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.lightPrimary)
-                                : (isDark
-                                    ? AppColors.darkSubText
-                                    : AppColors.lightSubText)),
-                      ),
-                    );
-                  }).toList(),
-                ),
+              MultiSelectChip(
+                items: financialProvider.fixedExpenses
+                    .map((item) => _translatedFinancialItem(context, item.name))
+                    .toList(),
+                selectedItems: financialProvider.fixedExpenses
+                    .where((item) => item.selected)
+                    .map((item) => _translatedFinancialItem(context, item.name))
+                    .toList(),
+                onTap: (displayName) {
+                  final displayedItems = financialProvider.fixedExpenses
+                      .map(
+                        (expense) => _translatedFinancialItem(
+                          context,
+                          expense.name,
+                        ),
+                      )
+                      .toList();
+
+                  final selectedIndex =
+                      displayedItems.indexOf(displayName);
+
+                  if (selectedIndex == -1) {
+                    return;
+                  }
+
+                  financialProvider.toggleExpense(
+                    financialProvider.fixedExpenses[selectedIndex],
+                  );
+                },
               ),
               SizedBox(height: screenH * 0.01),
               ...financialProvider.fixedExpenses
@@ -484,7 +538,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                   padding: const EdgeInsets.only(bottom: 10.0),
                   child: CustomTextfield(
                     controller: item.controller,
-                    hint: "Enter monthly amount for ${item.name}",
+                    hint: "enter_monthly_amount_for".tr(args: [_translatedFinancialItem(context, item.name)]),
                     type: TextFieldType.number,
                     inputFormatters: [_decimalFormatter],
                     suffix: const Padding(
@@ -497,56 +551,39 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.03),
 
               // 8. Flexible Monthly Expenses
-              _SectionTitle("Flexible Monthly Expenses",
+              _SectionTitle("flexible_monthly_expenses".tr(),
                   isDark: isDark, screenW: screenW),
               SizedBox(height: screenH * 0.01),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: Row(
-                  children: financialProvider.flexibleExpenses
-                      .asMap()
-                      .entries
-                      .map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          right: index !=
-                                  financialProvider.flexibleExpenses.length - 1
-                              ? 10.0
-                              : 0),
-                      child: ChoiceChip(
-                        label: Text(item.name),
-                        selected: item.selected,
-                        onSelected: (_) => financialProvider.toggleExpense(item,
-                            isFixed: false),
-                        selectedColor: (isDark
-                                ? AppColors.darkSecondary
-                                : AppColors.lightSecondary)
-                            .withValues(alpha: 0.04),
-                        backgroundColor: (isDark
-                                ? AppColors.darkSubText
-                                : AppColors.lightSubText)
-                            .withValues(alpha: 0.4),
-                        side: BorderSide(
-                            color: item.selected
-                                ? (isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.lightPrimary)
-                                : Colors.transparent),
-                        labelStyle: TextStyle(
-                            color: item.selected
-                                ? (isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.lightPrimary)
-                                : (isDark
-                                    ? AppColors.darkSubText
-                                    : AppColors.lightSubText)),
-                      ),
-                    );
-                  }).toList(),
-                ),
+              MultiSelectChip(
+                items: financialProvider.flexibleExpenses
+                    .map((item) => _translatedFinancialItem(context, item.name))
+                    .toList(),
+                selectedItems: financialProvider.flexibleExpenses
+                    .where((item) => item.selected)
+                    .map((item) => _translatedFinancialItem(context, item.name))
+                    .toList(),
+                onTap: (displayName) {
+                  final displayedItems = financialProvider.flexibleExpenses
+                      .map(
+                        (expense) => _translatedFinancialItem(
+                          context,
+                          expense.name,
+                        ),
+                      )
+                      .toList();
+
+                  final selectedIndex =
+                      displayedItems.indexOf(displayName);
+
+                  if (selectedIndex == -1) {
+                    return;
+                  }
+
+                  financialProvider.toggleExpense(
+                    financialProvider.flexibleExpenses[selectedIndex],
+                    isFixed: false,
+                  );
+                },
               ),
               SizedBox(height: screenH * 0.01),
               ...financialProvider.flexibleExpenses
@@ -556,7 +593,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                   padding: const EdgeInsets.only(bottom: 10.0),
                   child: CustomTextfield(
                     controller: item.controller,
-                    hint: "Enter monthly amount for ${item.name}",
+                    hint: "enter_monthly_amount_for".tr(args: [_translatedFinancialItem(context, item.name)]),
                     type: TextFieldType.number,
                     inputFormatters: [_decimalFormatter],
                     suffix: const Padding(
@@ -583,7 +620,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Estimated Financial Summary",
+                    Text("estimated_financial_summary".tr(),
                         style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -592,7 +629,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                                 : AppColors.lightText)),
                     const SizedBox(height: 8),
                     Text(
-                        "Note: These are estimates and do not represent actual transactions.",
+                        "estimated_summary_note".tr(),
                         style: GoogleFonts.ibmPlexSansArabic(
                             fontSize: 12,
                             color: isDark
@@ -603,13 +640,13 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                             ? AppColors.darkBorder
                             : AppColors.lightBorder,
                         height: 24),
-                    _SummaryRow("Expected Monthly Income",
+                    _SummaryRow("expected_monthly_income".tr(),
                         financialProvider.totalIncome,
                         isDark: isDark),
                     _SummaryRow(
-                        "Fixed Expenses", financialProvider.totalFixedExpenses,
+                        "fixed_expenses".tr(), financialProvider.totalFixedExpenses,
                         isDark: isDark),
-                    _SummaryRow("Flexible Expenses",
+                    _SummaryRow("flexible_expenses".tr(),
                         financialProvider.totalVariableExpenses,
                         isDark: isDark),
                     Divider(
@@ -617,7 +654,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                             ? AppColors.darkBorder
                             : AppColors.lightBorder,
                         height: 24),
-                    _SummaryRow("Total Estimated Expenses",
+                    _SummaryRow("total_estimated_expenses".tr(),
                         financialProvider.totalExpenses,
                         isDark: isDark, isBold: true),
                     const SizedBox(height: 8),
@@ -626,8 +663,8 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                       children: [
                         Text(
                           financialProvider.estimatedBalance >= 0
-                              ? "Estimated Surplus"
-                              : "Estimated Deficit",
+                              ? "estimated_surplus".tr()
+                              : "estimated_deficit".tr(),
                           style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -657,7 +694,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.04),
 
               // 10. Main Financial Goal
-              _SectionTitle("Main Financial Goal",
+              _SectionTitle("main_financial_goal".tr(),
                   isDark: isDark, screenW: screenW),
               SizedBox(height: screenH * 0.01),
               OptionChip(
@@ -666,19 +703,30 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                   "Debt payment",
                   "Daily budget",
                   "Emergency fund",
-                  "Other"
-                ],
-                selected: financialProvider.mainGoalDisplay,
-                onTap: financialProvider.setMainGoal,
+                  "Other",
+                ]
+                    .map((value) => _translatedMainGoal(context, value))
+                    .toList(),
+                selected: financialProvider.mainGoalDisplay == null
+                    ? null
+                    : _translatedMainGoal(
+                        context,
+                        financialProvider.mainGoalDisplay!,
+                      ),
+                onTap: (displayValue) {
+                  financialProvider.setMainGoal(
+                    _mainGoalFromDisplay(context, displayValue),
+                  );
+                },
               ),
               SizedBox(height: screenH * 0.03),
 
               // 11. Optional Extra Monthly Saving Target
-              _SectionTitle("Optional Extra Monthly Saving Target",
+              _SectionTitle("optional_saving_target".tr(),
                   isDark: isDark, screenW: screenW),
               const SizedBox(height: 4),
               Text(
-                "This is a personal target and is not counted as part of your income.",
+                "saving_target_description".tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                     fontSize: 13,
                     color: isDark
@@ -688,7 +736,7 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
               SizedBox(height: screenH * 0.01),
               CustomTextfield(
                 controller: financialProvider.savingTargetController,
-                hint: "Enter optional saving amount",
+                hint: "enter_optional_saving".tr(),
                 type: TextFieldType.number,
                 inputFormatters: [_decimalFormatter],
                 suffix: const Padding(
@@ -779,10 +827,10 @@ class _FinancialSetupScreenState extends State<FinancialSetupScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: onboardingProvider.isLoading
+                    child: (onboardingProvider.isLoading || _isNavigating)
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            "Next",
+                            "next".tr(),
                             style: GoogleFonts.ibmPlexSansArabic(
                               fontSize: 18,
                               color: financialProvider.isValid

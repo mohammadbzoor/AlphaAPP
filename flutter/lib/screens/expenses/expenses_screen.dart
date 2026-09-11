@@ -2,6 +2,7 @@ import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/core/utils/device.dart';
 import 'package:alpha_app/models/expense_model.dart';
 import 'package:alpha_app/providers/expense_provider.dart';
+import 'package:alpha_app/providers/language_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
 import 'package:alpha_app/screens/expenses/new_expense_screen.dart';
 import 'package:alpha_app/widgets/dashed_action_button.dart';
@@ -10,8 +11,10 @@ import 'package:alpha_app/widgets/empty_screen.dart';
 import 'package:alpha_app/widgets/expenses/expense_card.dart';
 import 'package:alpha_app/core/utils/onboarding_guard.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:alpha_app/providers/home_provider.dart';
 import 'package:alpha_app/core/utils/dashboard_action_result.dart';
@@ -38,6 +41,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
+     final languageProvider = Provider.of<LanguageProvider>(context);
     final expenseProvider = context.watch<ExpenseProvider>();
 
     final themeProvider = context.watch<Themeprovider>();
@@ -88,10 +92,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         ? EmptyStateView(
                             isDark: isDark,
                             screenW: screenW,
-                            title: "No expenses yet",
+                            title: 'expenses.empty_title'.tr(),
                             description:
-                                "Start recording your expenses to unlock spending analysis and personalized Alpha insights.",
-                            buttonText: "Add your first expense",
+                                'expenses.empty_description'.tr(),
+                            buttonText: 'expenses.add_first_expense'.tr(),
                             icon: Icons.account_balance_wallet_outlined,
                             color: isDark
                                 ? AppColors.darkSecondary
@@ -131,10 +135,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           SizedBox(
                             height: screenH * 0.018,
                           ),
-                          _AlphaInsightCard(
-                            insight: expenseProvider.spendingInsight,
-                            isDark: isDark,
-                          ),
                           SizedBox(
                             height: screenH * 0.025,
                           ),
@@ -152,9 +152,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               onDelete: () {
                                 DeleteDialog.show(
                                   context: context,
-                                  title: "Delete Expense",
+                                  title: 'expenses.delete_title'.tr(),
                                   message:
-                                      'Are you sure you want to delete "${expense.title}"?',
+                                      'expenses.delete_message'.tr(namedArgs: {'title': expense.title}),
                                   onDelete: () {
                                     context
                                         .read<ExpenseProvider>()
@@ -167,7 +167,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                     ).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          "Expense deleted successfully",
+                                          'expenses.deleted_successfully'.tr(),
                                           style:
                                               GoogleFonts.ibmPlexSansArabic(),
                                         ),
@@ -183,7 +183,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             height: 4,
                           ),
                           DashedActionButton(
-                            text: "Add a new expense",
+                            text: 'expenses.add_new_expense'.tr(),
                             isDark: isDark,
                             onTap: () {
                               _openNewExpenseScreen(
@@ -247,7 +247,7 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Expenses",
+                'expenses.title'.tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                   color: isDark ? AppColors.darkText : AppColors.lightText,
                   fontSize: screenW * 0.07,
@@ -256,7 +256,13 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                "$expenseCount ${expenseCount == 1 ? "expense" : "expenses"} recorded",
+                expenseCount == 1
+                    ? 'expenses.recorded_singular'.tr(
+                        namedArgs: {'count': expenseCount.toString()},
+                      )
+                    : 'expenses.recorded_plural'.tr(
+                        namedArgs: {'count': expenseCount.toString()},
+                      ),
                 style: GoogleFonts.ibmPlexSansArabic(
                   color:
                       isDark ? AppColors.darkSubText : AppColors.lightSubText,
@@ -339,7 +345,7 @@ class _ThisMonthCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "This Month",
+                  'expenses.this_month'.tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
                     color:
                         isDark ? AppColors.darkSubText : AppColors.lightSubText,
@@ -348,7 +354,7 @@ class _ThisMonthCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  "${total.toStringAsFixed(2)} JOD",
+                  "${total.toStringAsFixed(2)} ${'common.jod'.tr()}",
                   style: GoogleFonts.ibmPlexSansArabic(
                     color: isDark ? AppColors.darkText : AppColors.lightText,
                     fontSize: 23,
@@ -357,7 +363,21 @@ class _ThisMonthCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "$expenseCount ${expenseCount == 1 ? "expense" : "expenses"} • $monthLabel ${now.year}",
+                  expenseCount == 1
+                      ? 'expenses.month_summary_singular'.tr(
+                          namedArgs: {
+                            'count': expenseCount.toString(),
+                            'month': monthLabel,
+                            'year': now.year.toString(),
+                          },
+                        )
+                      : 'expenses.month_summary_plural'.tr(
+                          namedArgs: {
+                            'count': expenseCount.toString(),
+                            'month': monthLabel,
+                            'year': now.year.toString(),
+                          },
+                        ),
                   style: GoogleFonts.ibmPlexSansArabic(
                     color:
                         isDark ? AppColors.darkSubText : AppColors.lightSubText,
@@ -430,7 +450,7 @@ class _AnalyticsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  "Spending Analytics",
+                  'expenses.spending_analytics'.tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
                     color: isDark ? AppColors.darkText : AppColors.lightText,
                     fontSize: 16,
@@ -456,7 +476,7 @@ class _AnalyticsCard extends StatelessWidget {
               height: 200,
               child: Center(
                 child: Text(
-                  "No analytics data yet",
+                  'expenses.no_analytics_data'.tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
                     color:
                         isDark ? AppColors.darkSubText : AppColors.lightSubText,
@@ -532,35 +552,35 @@ class _AnalyticsSelector extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         children: [
           _AnalyticsTab(
-            label: "Payment",
+            label: 'expenses.analytics.payment'.tr(),
             icon: Icons.credit_card_outlined,
             isSelected: selectedType == _AnalyticsType.payment,
             isDark: isDark,
             onTap: () => onChanged(_AnalyticsType.payment),
           ),
           _AnalyticsTab(
-            label: "Movement",
+            label: 'expenses.analytics.movement'.tr(),
             icon: Icons.repeat_rounded,
             isSelected: selectedType == _AnalyticsType.movement,
             isDark: isDark,
             onTap: () => onChanged(_AnalyticsType.movement),
           ),
           _AnalyticsTab(
-            label: "Source",
+            label: 'expenses.analytics.source'.tr(),
             icon: Icons.input_rounded,
             isSelected: selectedType == _AnalyticsType.source,
             isDark: isDark,
             onTap: () => onChanged(_AnalyticsType.source),
           ),
           _AnalyticsTab(
-            label: "Need / Want",
+            label: 'expenses.analytics.need_want'.tr(),
             icon: Icons.balance_rounded,
             isSelected: selectedType == _AnalyticsType.needWant,
             isDark: isDark,
             onTap: () => onChanged(_AnalyticsType.needWant),
           ),
           _AnalyticsTab(
-            label: "Category",
+            label: 'expenses.analytics.category'.tr(),
             icon: Icons.category_outlined,
             isSelected: selectedType == _AnalyticsType.category,
             isDark: isDark,
@@ -778,7 +798,7 @@ class _AnalyticsLegend extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                entry.key,
+                _translateAnalyticsValue(entry.key),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.ibmPlexSansArabic(
@@ -849,7 +869,7 @@ class _WeeklySpendingChart extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               Text(
-                "Last 7 Days",
+                'expenses.last_7_days'.tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                   color: isDark ? AppColors.darkText : AppColors.lightText,
                   fontSize: 13,
@@ -924,7 +944,7 @@ class _WeeklySpendingChart extends StatelessWidget {
                       return spots
                           .map(
                             (spot) => LineTooltipItem(
-                              "${spot.y.toStringAsFixed(1)} JOD",
+                              "${spot.y.toStringAsFixed(1)} ${'common.jod'.tr()}",
                               GoogleFonts.ibmPlexSansArabic(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -985,84 +1005,6 @@ class _WeeklySpendingChart extends StatelessWidget {
 }
 
 // =====================================================
-// ALPHA INSIGHT
-// =====================================================
-
-class _AlphaInsightCard extends StatelessWidget {
-  final String insight;
-  final bool isDark;
-
-  const _AlphaInsightCard({
-    required this.insight,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkAccent.withOpacity(0.2)
-            : AppColors.lightAccent.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(21),
-        border: Border.all(
-          color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 43,
-            height: 43,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkAccent.withOpacity(0.12)
-                  : AppColors.lightAccent.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Alpha Insight",
-                  style: GoogleFonts.ibmPlexSansArabic(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  insight.trim().isEmpty
-                      ? "Your personalized spending insight will appear here."
-                      : insight,
-                  style: GoogleFonts.ibmPlexSansArabic(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// =====================================================
 // RECENT EXPENSES
 // =====================================================
 
@@ -1083,7 +1025,7 @@ class _RecentExpensesHeader extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            "Recent Expenses",
+            'expenses.recent_expenses'.tr(),
             style: GoogleFonts.ibmPlexSansArabic(
               color: isDark ? AppColors.darkText : AppColors.lightText,
               fontSize: screenW * 0.048,
@@ -1252,6 +1194,61 @@ String _cleanEnumText(
       .join(' ');
 }
 
+
+String _translateAnalyticsValue(
+  String value,
+) {
+  final normalized = value
+      .trim()
+      .toLowerCase()
+      .replaceAll('&', 'and')
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+
+  const directKeys = <String, String>{
+    'payment': 'expenses.analytics.payment',
+    'movement': 'expenses.analytics.movement',
+    'source': 'expenses.analytics.source',
+    'need_want': 'expenses.analytics.need_want',
+    'category': 'expenses.analytics.category',
+    'cash': 'new_expense.options.cash',
+    'card': 'new_expense.options.card',
+    'wallet': 'new_expense.options.wallet',
+    'occasional': 'new_expense.options.occasional',
+    'recurring': 'new_expense.options.recurring',
+    'need': 'new_expense.options.need',
+    'needs': 'new_expense.options.need',
+    'want': 'new_expense.options.want',
+    'wants': 'new_expense.options.want',
+    'food': 'new_expense.options.food',
+    'shopping': 'new_expense.options.shopping',
+    'transport': 'new_expense.options.transport',
+    'bills': 'new_expense.options.bills',
+    'health': 'new_expense.options.health',
+    'education': 'new_expense.options.education',
+    'entertainment': 'new_expense.options.entertainment',
+    'travel': 'new_expense.options.travel',
+    'investment': 'new_expense.options.investment',
+    'other': 'new_expense.options.other',
+    'one_time': 'expense_card.one_time',
+    'unknown': 'common.not_available',
+    'manual': 'manual',
+  };
+
+  final key = directKeys[normalized];
+
+  if (key == null) {
+    return value;
+  }
+
+  try {
+    final translated = key.tr();
+    return translated == key ? value : translated;
+  } catch (_) {
+    return value;
+  }
+}
+
 double _toDouble(
   dynamic value,
 ) {
@@ -1357,22 +1354,8 @@ List<String> _lastSevenDayLabels() {
 String _monthName(
   int month,
 ) {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  return months[month - 1];
+  final date = DateTime(2026, month);
+  return DateFormat.MMMM().format(date);
 }
 
 Color _analyticsColor(
@@ -1417,19 +1400,19 @@ String _analyticsCenterText(
 ) {
   switch (type) {
     case _AnalyticsType.payment:
-      return "Payment";
+      return 'expenses.analytics.payment'.tr();
 
     case _AnalyticsType.movement:
-      return "Movement";
+      return 'expenses.analytics.movement'.tr();
 
     case _AnalyticsType.source:
-      return "Source";
+      return 'expenses.analytics.source'.tr();
 
     case _AnalyticsType.needWant:
-      return "Need / Want";
+      return 'expenses.analytics.need_want'.tr();
 
     case _AnalyticsType.category:
-      return "Category";
+      return 'expenses.analytics.category'.tr();
   }
 }
 

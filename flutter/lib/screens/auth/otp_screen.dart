@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/core/utils/step_resolver.dart';
+import 'package:alpha_app/providers/auth_provider.dart';
 import 'package:alpha_app/providers/onboarding_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
-import 'package:alpha_app/providers/auth_provider.dart';
 import 'package:alpha_app/widgets/app_button.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
@@ -29,45 +31,74 @@ class OtpScreen extends StatefulWidget {
 class _OtpScreenState extends State<OtpScreen> {
   final _pinController = TextEditingController();
   final _focusNode = FocusNode();
+
   int _secondsRemaining = 30;
+
   Timer? _timer;
+
   bool _isLoading = false;
   bool _isResending = false;
   bool _showDevCode = true;
+
   String? _errorMessage;
   String? _currentDevCode;
 
   String get _maskedPhone {
     final phone = widget.phoneNumber;
-    if (phone.length <= 4) return phone;
-    final lastFour = phone.substring(phone.length - 4);
-    return '${phone.substring(0, 3)}${'•' * (phone.length - 7)}$lastFour';
+
+    if (phone.length <= 4) {
+      return phone;
+    }
+
+    final lastFour = phone.substring(
+      phone.length - 4,
+    );
+
+    return '${phone.substring(0, 3)}'
+        '${'•' * (phone.length - 7)}'
+        '$lastFour';
   }
 
   @override
   void initState() {
     super.initState();
+
     _currentDevCode = widget.devOtpCode;
+
     _startTimer();
-    // Auto-focus the OTP input
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
       _focusNode.requestFocus();
     });
   }
 
   void _startTimer() {
-    setState(() => _secondsRemaining = 30);
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      setState(() {
-        if (_secondsRemaining > 0) {
-          _secondsRemaining--;
-        } else {
-          _timer?.cancel();
-        }
-      });
+    setState(() {
+      _secondsRemaining = 30;
     });
+
+    _timer?.cancel();
+
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          if (_secondsRemaining > 0) {
+            _secondsRemaining--;
+          } else {
+            _timer?.cancel();
+          }
+        });
+      },
+    );
   }
 
   Future<void> _verifyOtp() async {
@@ -75,7 +106,8 @@ class _OtpScreenState extends State<OtpScreen> {
 
     if (otpCode.length != 6) {
       setState(() {
-        _errorMessage = 'Please enter the full 6-digit code';
+        _errorMessage =
+            "otp.enter_full_code".tr();
       });
 
       return;
@@ -87,9 +119,11 @@ class _OtpScreenState extends State<OtpScreen> {
     });
 
     try {
-      final authProvider = context.read<AuthProvider>();
+      final authProvider =
+          context.read<AuthProvider>();
 
-      final success = await authProvider.verifyPhoneOtp(
+      final success =
+          await authProvider.verifyPhoneOtp(
         otpCode: otpCode,
       );
 
@@ -99,7 +133,9 @@ class _OtpScreenState extends State<OtpScreen> {
 
       if (!success) {
         setState(() {
-          _errorMessage = authProvider.errorMessage ?? 'Verification failed';
+          _errorMessage =
+              authProvider.errorMessage ??
+                  "otp.verification_failed".tr();
         });
 
         _pinController.clear();
@@ -114,20 +150,28 @@ class _OtpScreenState extends State<OtpScreen> {
           SnackBar(
             content: Text(
               widget.isRegistration
-                  ? 'Account verified successfully'
-                  : 'Verified successfully',
-              style: GoogleFonts.ibmPlexSansArabic(),
+                  ? "otp.account_verified".tr()
+                  : "otp.verified".tr(),
+              style:
+                  GoogleFonts.ibmPlexSansArabic(),
             ),
-            backgroundColor: const Color(0xFF0F766E),
-            behavior: SnackBarBehavior.floating,
+            backgroundColor:
+                const Color(0xFF0F766E),
+            behavior:
+                SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius:
+                  BorderRadius.circular(10),
             ),
           ),
         );
 
-      final onboardingProvider = context.read<OnboardingProvider>();
-      final statusLoaded = await onboardingProvider.checkOnboardingStatus();
+      final onboardingProvider =
+          context.read<OnboardingProvider>();
+
+      final statusLoaded =
+          await onboardingProvider
+              .checkOnboardingStatus();
 
       if (!mounted) {
         return;
@@ -137,12 +181,14 @@ class _OtpScreenState extends State<OtpScreen> {
         replaceWithOnboardingStep(
           context,
           onboardingProvider.nextStep,
-          allocation: onboardingProvider.allocation,
+          allocation:
+              onboardingProvider.allocation,
         );
       } else {
         setState(() {
-          _errorMessage = onboardingProvider.errorMessage ??
-              'Could not load onboarding status';
+          _errorMessage =
+              onboardingProvider.errorMessage ??
+                  "otp.onboarding_failed".tr();
         });
       }
     } catch (error) {
@@ -151,7 +197,9 @@ class _OtpScreenState extends State<OtpScreen> {
       }
 
       setState(() {
-        _errorMessage = error.toString().replaceFirst(
+        _errorMessage = error
+            .toString()
+            .replaceFirst(
               'Exception: ',
               '',
             );
@@ -169,12 +217,14 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   Future<void> _resendOtp() async {
-    if (_secondsRemaining > 0 || _isResending) {
+    if (_secondsRemaining > 0 ||
+        _isResending) {
       return;
     }
 
     setState(() {
-      _errorMessage = 'Resend OTP is not available yet';
+      _errorMessage =
+          "otp.resend_unavailable".tr();
     });
   }
 
@@ -183,157 +233,276 @@ class _OtpScreenState extends State<OtpScreen> {
     _timer?.cancel();
     _pinController.dispose();
     _focusNode.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<Themeprovider>(context);
-    final isDark = themeProvider.isDark;
-    final screenW = MediaQuery.of(context).size.width;
+    final themeProvider =
+        context.watch<Themeprovider>();
 
-    final bgColor =
-        isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final textColor = isDark ? AppColors.darkText : AppColors.lightText;
-    final subTextColor =
-        isDark ? AppColors.darkSubText : AppColors.lightSubText;
-    final accentColor = isDark ? AppColors.darkAccent : AppColors.lightAccent;
-    final primaryColor =
-        isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
-    final cardColor = isDark ? AppColors.darkCard : AppColors.lightCard;
-    final errorColor = isDark ? AppColors.darkError : AppColors.lightError;
+    final isDark = themeProvider.isDark;
+
+    final screenW =
+        MediaQuery.of(context).size.width;
+
+    final screenH =
+        MediaQuery.of(context).size.height;
+
+    final bgColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+
+    final textColor = isDark
+        ? AppColors.darkText
+        : AppColors.lightText;
+
+    final subTextColor = isDark
+        ? AppColors.darkSubText
+        : AppColors.lightSubText;
+
+    final accentColor = isDark
+        ? AppColors.darkAccent
+        : AppColors.lightAccent;
+
+    final primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
+    final cardColor = isDark
+        ? AppColors.darkCard
+        : AppColors.lightCard;
+
+    final errorColor = isDark
+        ? AppColors.darkError
+        : AppColors.lightError;
+
+    final borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
 
     final pinTheme = PinTheme(
       width: 52,
       height: 60,
-      textStyle: GoogleFonts.ibmPlexSansArabic(
+      textStyle:
+          GoogleFonts.ibmPlexSansArabic(
         fontSize: 22,
         fontWeight: FontWeight.bold,
         color: textColor,
       ),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius:
+            BorderRadius.circular(12),
         border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          color: borderColor,
+        ),
       ),
     );
+
+    
 
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
         child: SingleChildScrollView(
+          physics:
+              const BouncingScrollPhysics(),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: screenW * 0.06),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenW * 0.06,
+            ),
             child: Column(
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.06),
-
-                // Back button
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: Icon(Icons.arrow_back_ios, color: textColor),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                SizedBox(
+                  height: screenH * 0.06,
                 ),
 
-                const SizedBox(height: 20),
+               Align(
+  alignment: AlignmentDirectional.centerStart,
+  child: InkWell(
+    onTap: _isLoading
+        ? null
+        : () {
+            Navigator.pop(context);
+          },
+    borderRadius: BorderRadius.circular(13),
+    child: Container(
+      width: screenW * 0.12,
+      height: screenW * 0.12,
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkPrimary.withOpacity(0.10)
+            : AppColors.lightPrimary.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Icon(
+        Icons.arrow_back_rounded,
+        color: isDark
+            ? AppColors.darkPrimary
+            : AppColors.lightPrimary,
+        size: screenW * 0.07,
+      ),
+    ),
+  ),
+),
 
-                // Icon
+                const SizedBox(
+                  height: 20,
+                ),
+
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding:
+                      const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.10),
+                    color: primaryColor
+                        .withOpacity(0.10),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.mark_email_read_outlined,
-                      size: 48, color: primaryColor),
+                  child: Icon(
+                    Icons.mark_email_read_outlined,
+                    size: 48,
+                    color: primaryColor,
+                  ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(
+                  height: 32,
+                ),
 
-                // Title
                 Text(
-                  'Verification Code',
-                  style: GoogleFonts.ibmPlexSansArabic(
+                  "otp.title".tr(),
+                  textAlign: TextAlign.center,
+                  style:
+                      GoogleFonts.ibmPlexSansArabic(
                     fontSize: screenW * 0.07,
                     fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(
+                  height: 12,
+                ),
 
-                // Subtitle
                 Text(
-                  'We sent a 6-digit verification code to your email',
+                  "otp.description".tr(),
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.ibmPlexSansArabic(
+                  style:
+                      GoogleFonts.ibmPlexSansArabic(
                     fontSize: screenW * 0.04,
                     color: subTextColor,
                     height: 1.5,
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(
+                  height: 32,
+                ),
 
-                // Dev mode OTP code display
-                if (_currentDevCode != null && _showDevCode) ...[
+                if (_currentDevCode != null &&
+                    _showDevCode) ...[
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 16, horizontal: 20),
+                    padding:
+                        const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 20,
+                    ),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: accentColor.withOpacity(0.30)),
+                      color: accentColor
+                          .withOpacity(0.10),
+                      borderRadius:
+                          BorderRadius.circular(12),
+                      border: Border.all(
+                        color: accentColor
+                            .withOpacity(0.30),
+                      ),
                     ),
                     child: Column(
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment:
+                              MainAxisAlignment
+                                  .center,
                           children: [
-                            Icon(Icons.code, size: 18, color: accentColor),
-                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.code,
+                              size: 18,
+                              color: accentColor,
+                            ),
+
+                            const SizedBox(
+                              width: 8,
+                            ),
+
                             Text(
-                              'Dev Mode - Your OTP Code',
-                              style: GoogleFonts.ibmPlexSansArabic(
+                              "otp.dev_mode".tr(),
+                              style: GoogleFonts
+                                  .ibmPlexSansArabic(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontWeight:
+                                    FontWeight.w600,
                                 color: accentColor,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+
+                        const SizedBox(
+                          height: 10,
+                        ),
+
                         GestureDetector(
-                          onTap: () {
-                            _pinController.text = _currentDevCode!;
-                            _focusNode.requestFocus();
-                          },
+                          onTap: _isLoading
+                              ? null
+                              : () {
+                                  _pinController
+                                          .text =
+                                      _currentDevCode!;
+
+                                  _focusNode
+                                      .requestFocus();
+                                },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 24),
-                            decoration: BoxDecoration(
-                              color: accentColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
+                            padding:
+                                const EdgeInsets
+                                    .symmetric(
+                              vertical: 10,
+                              horizontal: 24,
+                            ),
+                            decoration:
+                                BoxDecoration(
+                              color: accentColor
+                                  .withOpacity(0.15),
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(8),
                             ),
                             child: Text(
                               _currentDevCode!,
-                              style: GoogleFonts.ibmPlexSansArabic(
+                              textDirection: Directionality.of(context),
+                              style: GoogleFonts
+                                  .ibmPlexSansArabic(
                                 fontSize: 28,
-                                fontWeight: FontWeight.bold,
+                                fontWeight:
+                                    FontWeight.bold,
                                 color: accentColor,
                                 letterSpacing: 6,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+
+                        const SizedBox(
+                          height: 8,
+                        ),
+
                         Text(
-                          'Tap to auto-fill',
-                          style: GoogleFonts.ibmPlexSansArabic(
+                          "otp.tap_to_fill".tr(),
+                          style: GoogleFonts
+                              .ibmPlexSansArabic(
                             fontSize: 11,
                             color: subTextColor,
                           ),
@@ -341,28 +510,47 @@ class _OtpScreenState extends State<OtpScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+
+                  const SizedBox(
+                    height: 24,
+                  ),
                 ],
 
-                // Error message
                 if (_errorMessage != null) ...[
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
+                    padding:
+                        const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
-                      color: errorColor.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: errorColor.withOpacity(0.30)),
+                      color:
+                          errorColor.withOpacity(0.10),
+                      borderRadius:
+                          BorderRadius.circular(10),
+                      border: Border.all(
+                        color: errorColor
+                            .withOpacity(0.30),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, size: 20, color: errorColor),
-                        const SizedBox(width: 10),
+                        Icon(
+                          Icons.error_outline,
+                          size: 20,
+                          color: errorColor,
+                        ),
+
+                        const SizedBox(
+                          width: 10,
+                        ),
+
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: GoogleFonts.ibmPlexSansArabic(
+                            style: GoogleFonts
+                                .ibmPlexSansArabic(
                               fontSize: 13,
                               color: errorColor,
                             ),
@@ -371,74 +559,110 @@ class _OtpScreenState extends State<OtpScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+
+                  const SizedBox(
+                    height: 16,
+                  ),
                 ],
 
-                // OTP Input
-                Pinput(
-                  controller: _pinController,
-                  focusNode: _focusNode,
-                  length: 6,
-                  defaultPinTheme: pinTheme,
-                  focusedPinTheme: pinTheme.copyWith(
-                    decoration: pinTheme.decoration!.copyWith(
-                      border: Border.all(color: primaryColor, width: 2),
+                Directionality(
+                  textDirection: Directionality.of(context),
+                  child: Pinput(
+                    controller: _pinController,
+                    focusNode: _focusNode,
+                    length: 6,
+                    enabled: !_isLoading,
+                    defaultPinTheme: pinTheme,
+                    focusedPinTheme:
+                        pinTheme.copyWith(
+                      decoration:
+                          pinTheme.decoration!.copyWith(
+                        border: Border.all(
+                          color: primaryColor,
+                          width: 2,
+                        ),
+                      ),
                     ),
-                  ),
-                  errorPinTheme: pinTheme.copyWith(
-                    decoration: pinTheme.decoration!.copyWith(
-                      border: Border.all(color: errorColor, width: 2),
+                    errorPinTheme:
+                        pinTheme.copyWith(
+                      decoration:
+                          pinTheme.decoration!.copyWith(
+                        border: Border.all(
+                          color: errorColor,
+                          width: 2,
+                        ),
+                      ),
                     ),
+                    onCompleted: (_) {
+                      _verifyOtp();
+                    },
+                    onChanged: (_) {
+                      if (_errorMessage != null) {
+                        setState(() {
+                          _errorMessage = null;
+                        });
+                      }
+                    },
                   ),
-                  onCompleted: (_) => _verifyOtp(),
-                  onChanged: (_) {
-                    if (_errorMessage != null) {
-                      setState(() => _errorMessage = null);
-                    }
-                  },
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(
+                  height: 24,
+                ),
 
-                // Resend section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment:
+                      WrapCrossAlignment.center,
                   children: [
                     Text(
-                      "Didn't receive the code? ",
-                      style: GoogleFonts.ibmPlexSansArabic(
+                      "${"otp.didnt_receive".tr()} ",
+                      style: GoogleFonts
+                          .ibmPlexSansArabic(
                         color: subTextColor,
                         fontSize: 14,
                       ),
                     ),
+
                     GestureDetector(
-                      onTap: _secondsRemaining == 0 && !_isResending
+                      onTap: _secondsRemaining == 0 &&
+                              !_isResending &&
+                              !_isLoading
                           ? _resendOtp
                           : null,
                       child: Text(
                         _isResending
-                            ? 'Sending...'
+                            ? "otp.sending".tr()
                             : _secondsRemaining > 0
-                                ? 'Resend in 0:${_secondsRemaining.toString().padLeft(2, '0')}'
-                                : 'Resend Code',
-                        style: GoogleFonts.ibmPlexSansArabic(
-                          color: (_secondsRemaining == 0 && !_isResending)
-                              ? primaryColor
-                              : subTextColor,
-                          fontWeight: FontWeight.w600,
+                                ? "${"otp.resend_in".tr()} "
+                                    "0:${_secondsRemaining.toString().padLeft(2, '0')}"
+                                : "otp.resend".tr(),
+                      textDirection: Directionality.of(context),
+                        style: GoogleFonts
+                            .ibmPlexSansArabic(
+                          color:
+                              _secondsRemaining ==
+                                          0 &&
+                                      !_isResending
+                                  ? primaryColor
+                                  : subTextColor,
+                          fontWeight:
+                              FontWeight.w600,
                           fontSize: 14,
-                          decoration: TextDecoration.none,
+                          decoration:
+                              TextDecoration.none,
                         ),
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 48),
+                const SizedBox(
+                  height: 48,
+                ),
 
-                // Verify button
                 AppButton(
-                  text: 'Verify',
+                  text: "otp.verify".tr(),
                   isDark: isDark,
                   isLoading: _isLoading,
                   width: double.infinity,
@@ -446,7 +670,9 @@ class _OtpScreenState extends State<OtpScreen> {
                   onPressed: _verifyOtp,
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(
+                  height: 32,
+                ),
               ],
             ),
           ),

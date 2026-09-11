@@ -4,6 +4,7 @@ import 'package:alpha_app/models/financial_analysis_model.dart';
 import 'package:alpha_app/providers/financial_analysis_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
 import 'package:alpha_app/screens/analysis/financial_analysis_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -83,7 +84,7 @@ class _FinancialAnalysisCenterScreenState extends State<FinancialAnalysisCenterS
                 ],
                 const SizedBox(height: 28),
                 Text(
-                  'التحليلات السابقة',
+                  'analysis.previous_analyses'.tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
                     color: isDark ? AppColors.darkText : AppColors.lightText,
                     fontSize: 18,
@@ -122,7 +123,7 @@ class _Header extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            'مركز التحليل',
+            'analysis.center_title'.tr(),
             style: GoogleFonts.ibmPlexSansArabic(
               color: isDark ? AppColors.darkText : AppColors.lightText,
               fontSize: 24,
@@ -183,7 +184,7 @@ class _GenerateCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'انقر للتحليل',
+                      'analysis.tap_to_analyze'.tr(),
                       style: GoogleFonts.ibmPlexSansArabic(
                         color: isDark ? AppColors.darkText : AppColors.lightText,
                         fontSize: 20,
@@ -192,7 +193,9 @@ class _GenerateCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      isGenerating ? 'جاري إعداد التحليل...' : 'أنشئ ملخصاً مالياً محفوظاً من بياناتك الحالية.',
+                      isGenerating
+                          ? 'analysis.generating'.tr()
+                          : 'analysis.generate_description'.tr(),
                       style: GoogleFonts.ibmPlexSansArabic(
                         color: isDark ? AppColors.darkSubText : AppColors.lightSubText,
                         fontSize: 13,
@@ -272,17 +275,19 @@ class _HistoryTile extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: const Icon(Icons.analytics_outlined, color: Color(0xFF4F9CF9)),
         title: Text(
-          item.summaryPreview.isEmpty ? 'تحليل مالي محفوظ' : item.summaryPreview,
+          item.summaryPreview.isEmpty
+              ? 'analysis.saved_analysis'.tr()
+              : item.summaryPreview,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          textDirection: TextDirection.rtl,
+       
           style: GoogleFonts.ibmPlexSansArabic(
             color: isDark ? AppColors.darkText : AppColors.lightText,
             fontWeight: FontWeight.w600,
           ),
         ),
         subtitle: Text(
-          '${_formatDate(item.generatedAt)} • ${item.scope} • ${item.insightCount} insights',
+          "${_formatDate(item.generatedAt)} • ${item.scope} • ${item.insightCount} ${'analysis.insights'.tr()}",
           style: GoogleFonts.ibmPlexSansArabic(
             color: isDark ? AppColors.darkSubText : AppColors.lightSubText,
             fontSize: 11,
@@ -314,12 +319,12 @@ class _EmptyHistory extends StatelessWidget {
           const Icon(Icons.history_rounded, color: Color(0xFF8A9A96), size: 34),
           const SizedBox(height: 10),
           Text(
-            'لا توجد تحليلات محفوظة بعد.',
+            'analysis.no_saved_analyses'.tr(),
             style: GoogleFonts.ibmPlexSansArabic(
               color: isDark ? AppColors.darkSubText : AppColors.lightSubText,
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text('تحديث')),
+          TextButton(onPressed: onRetry, child: Text('common.refresh'.tr())),
         ],
       ),
     );
@@ -348,7 +353,7 @@ class _ErrorCard extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline_rounded, color: Color(0xFFFF6B6B)),
           const SizedBox(width: 8),
-          Expanded(child: Text(message, textDirection: TextDirection.rtl)),
+          Expanded(child: Text(message, )),
           IconButton(onPressed: onClose, icon: const Icon(Icons.close_rounded, size: 18)),
         ],
       ),

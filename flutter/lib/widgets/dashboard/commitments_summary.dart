@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/models/home_model.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CommitmentsSummaryWidget extends StatelessWidget {
@@ -9,22 +10,27 @@ class CommitmentsSummaryWidget extends StatelessWidget {
   final VoidCallback onViewCommitments;
 
   const CommitmentsSummaryWidget({
-    Key? key,
+    super.key,
     required this.commitments,
     required this.isDark,
     required this.onViewCommitments,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (commitments == null) return const SizedBox.shrink();
+    if (commitments == null) {
+      return const SizedBox.shrink();
+    }
 
-    final shouldShow = (commitments!.totalReserved != null &&
-            commitments!.totalReserved! > 0) ||
-        commitments!.upcomingCount > 0 ||
-        commitments!.overdueCount > 0;
+    final shouldShow =
+        (commitments!.totalReserved != null &&
+                commitments!.totalReserved! > 0) ||
+            commitments!.upcomingCount > 0 ||
+            commitments!.overdueCount > 0;
 
-    if (!shouldShow) return const SizedBox.shrink();
+    if (!shouldShow) {
+      return const SizedBox.shrink();
+    }
 
     final hasOverdue = commitments!.overdueCount > 0;
 
@@ -36,7 +42,9 @@ class CommitmentsSummaryWidget extends StatelessWidget {
         border: Border.all(
           color: hasOverdue
               ? Colors.red.withOpacity(0.5)
-              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+              : (isDark
+                  ? AppColors.darkBorder
+                  : AppColors.lightBorder),
         ),
       ),
       child: Column(
@@ -44,17 +52,21 @@ class CommitmentsSummaryWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.event_repeat,
-                  color: hasOverdue
-                      ? Colors.red
-                      : (isDark
-                          ? AppColors.darkPrimary
-                          : AppColors.lightPrimary)),
+              Icon(
+                Icons.event_repeat,
+                color: hasOverdue
+                    ? Colors.red
+                    : (isDark
+                        ? AppColors.darkPrimary
+                        : AppColors.lightPrimary),
+              ),
               const SizedBox(width: 8),
               Text(
-                "Commitments Summary",
+                'commitments.summary'.tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
-                  color: isDark ? AppColors.darkText : AppColors.lightText,
+                  color: isDark
+                      ? AppColors.darkText
+                      : AppColors.lightText,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -65,13 +77,15 @@ class CommitmentsSummaryWidget extends StatelessWidget {
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  tapTargetSize:
+                      MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  "View",
+                  'common.view'.tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
-                    color:
-                        isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+                    color: isDark
+                        ? AppColors.darkPrimary
+                        : AppColors.lightPrimary,
                     fontSize: 14,
                   ),
                 ),
@@ -80,16 +94,24 @@ class CommitmentsSummaryWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment:
+                MainAxisAlignment.spaceBetween,
             children: [
               _buildItem(
-                  "Total Reserved",
-                  commitments!.totalReserved != null
-                      ? "${commitments!.totalReserved!.toStringAsFixed(2)} JOD"
-                      : "0.00 JOD"),
-              _buildItem("Upcoming", "${commitments!.upcomingCount}"),
-              _buildItem("Overdue", "${commitments!.overdueCount}",
-                  color: hasOverdue ? Colors.red : null),
+                'commitments.total_reserved'.tr(),
+                commitments!.totalReserved != null
+                    ? '${commitments!.totalReserved!.toStringAsFixed(2)} ${'common.jod'.tr()}'
+                    : '0.00 ${'common.jod'.tr()}',
+              ),
+              _buildItem(
+                'commitments.upcoming'.tr(),
+                "${commitments!.upcomingCount}",
+              ),
+              _buildItem(
+                'commitments.overdue'.tr(),
+                "${commitments!.overdueCount}",
+                color: hasOverdue ? Colors.red : null,
+              ),
             ],
           ),
         ],
@@ -97,14 +119,20 @@ class CommitmentsSummaryWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(String label, String value, {Color? color}) {
+  Widget _buildItem(
+    String label,
+    String value, {
+    Color? color,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: GoogleFonts.ibmPlexSansArabic(
-            color: isDark ? AppColors.darkSubText : AppColors.lightSubText,
+            color: isDark
+                ? AppColors.darkSubText
+                : AppColors.lightSubText,
             fontSize: 12,
           ),
         ),
@@ -112,7 +140,10 @@ class CommitmentsSummaryWidget extends StatelessWidget {
         Text(
           value,
           style: GoogleFonts.ibmPlexSansArabic(
-            color: color ?? (isDark ? AppColors.darkText : AppColors.lightText),
+            color: color ??
+                (isDark
+                    ? AppColors.darkText
+                    : AppColors.lightText),
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),

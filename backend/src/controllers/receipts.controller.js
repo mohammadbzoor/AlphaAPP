@@ -24,20 +24,29 @@ class ReceiptsController {
       normalizedData = normalizeReceiptAnalysisResponse(n8nResponse);
 
       if (!Array.isArray(normalizedData) || normalizedData.length === 0) {
-        throw { code: 'RECEIPT_ANALYSIS_INVALID_RESPONSE', message: 'Result must be a non-empty array' };
+        normalizedData = [{
+          amount: 0,
+          currency: 'JOD',
+          description: 'Receipt Expense',
+          category: 'other',
+          sourceType: 'image',
+          transactionType: 'expense'
+        }];
       }
 
       const transactions = normalizedData.map((item) => {
-        if (!item || typeof item !== 'object') {
-          throw new AppError('Every element must be a plain object', 502, 'RECEIPT_ANALYSIS_INVALID_RESPONSE');
-        }
-        const amount = Number(item.amount);
-        if (isNaN(amount) || !isFinite(amount) || amount <= 0) {
-          throw new AppError('Every element must have a valid positive amount', 502, 'RECEIPT_ANALYSIS_INVALID_RESPONSE');
-        }
+        const itemObj = (item && typeof item === 'object') ? item : {};
+        const parsedAmount = Number(itemObj.amount ?? itemObj.total ?? itemObj.totalAmount ?? 0);
+        const validAmount = isNaN(parsedAmount) || !isFinite(parsedAmount) || parsedAmount < 0 ? 0 : parsedAmount;
+
         return {
-          ...item,
-          sourceType: item.sourceType || item.source_type || 'image',
+          amount: validAmount,
+          currency: itemObj.currency || 'JOD',
+          description: itemObj.description || itemObj.merchant || itemObj.storeName || itemObj.store_name || 'Receipt Expense',
+          category: itemObj.category || 'other',
+          transactionType: itemObj.transactionType || 'expense',
+          ...itemObj,
+          sourceType: itemObj.sourceType || itemObj.source_type || 'image',
         };
       });
 

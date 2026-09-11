@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/models/home_model.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SafeDailySpendingCard extends StatelessWidget {
@@ -8,18 +9,21 @@ class SafeDailySpendingCard extends StatelessWidget {
   final bool isDark;
 
   const SafeDailySpendingCard({
-    Key? key,
+    super.key,
     required this.safeDailySpending,
     required this.isDark,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (safeDailySpending == null) return const SizedBox.shrink();
+    if (safeDailySpending == null) {
+      return const SizedBox.shrink();
+    }
 
     final isAvailable = safeDailySpending!.amount != null;
+
     final amountText = isAvailable
-        ? "${safeDailySpending!.amount!.toStringAsFixed(2)} JOD"
+        ? "${safeDailySpending!.amount!.toStringAsFixed(2)} ${'common.jod'.tr()}"
         : _getReasonText(safeDailySpending!.reasons);
 
     return Container(
@@ -29,7 +33,8 @@ class SafeDailySpendingCard extends StatelessWidget {
         color: isDark ? AppColors.darkCard : AppColors.lightCard,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          color:
+              isDark ? AppColors.darkBorder : AppColors.lightBorder,
         ),
       ),
       child: Column(
@@ -37,14 +42,19 @@ class SafeDailySpendingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.shield_outlined,
-                  color:
-                      isDark ? AppColors.darkPrimary : AppColors.lightPrimary),
+              Icon(
+                Icons.shield_outlined,
+                color: isDark
+                    ? AppColors.darkPrimary
+                    : AppColors.lightPrimary,
+              ),
               const SizedBox(width: 8),
               Text(
-                "Safe to spend daily",
+                'safe_daily_spending.title'.tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
-                  color: isDark ? AppColors.darkText : AppColors.lightText,
+                  color: isDark
+                      ? AppColors.darkText
+                      : AppColors.lightText,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -54,8 +64,10 @@ class SafeDailySpendingCard extends StatelessWidget {
                   safeDailySpending!.reliability != 'reliable' &&
                   safeDailySpending!.reliability != 'unavailable')
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -76,8 +88,12 @@ class SafeDailySpendingCard extends StatelessWidget {
             amountText,
             style: GoogleFonts.ibmPlexSansArabic(
               color: isAvailable
-                  ? (isDark ? AppColors.darkPrimary : AppColors.lightPrimary)
-                  : (isDark ? AppColors.darkSubText : AppColors.lightSubText),
+                  ? (isDark
+                      ? AppColors.darkPrimary
+                      : AppColors.lightPrimary)
+                  : (isDark
+                      ? AppColors.darkSubText
+                      : AppColors.lightSubText),
               fontWeight: FontWeight.bold,
               fontSize: isAvailable ? 24 : 14,
             ),
@@ -89,15 +105,17 @@ class SafeDailySpendingCard extends StatelessWidget {
 
   String _getReasonText(List<String> reasons) {
     if (reasons.isEmpty) {
-      return "لا تتوفر بيانات كافية لحساب الإنفاق اليومي الآمن.";
+      return 'safe_daily_spending.no_data'.tr();
     }
 
     if (reasons.contains('NO_ACTIVE_FINANCIAL_CYCLE')) {
-      return "لا توجد دورة مالية نشطة.";
+      return 'safe_daily_spending.no_cycle'.tr();
     }
+
     if (reasons.contains('ZERO_INCOME')) {
-      return "لم يتم تسجيل دخل.";
+      return 'safe_daily_spending.no_income'.tr();
     }
-    return "لا تتوفر بيانات كافية لحساب الإنفاق اليومي الآمن.";
+
+    return 'safe_daily_spending.no_data'.tr();
   }
 }

@@ -9,15 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProfileProvider extends ChangeNotifier {
   ProfileProvider();
 
-  final String? _storageKey = null; // Unused, we now use API
-
   ProfileModel? _profile;
   ProfileModel? get profile => _profile;
 
   ProfileCompletionModel? _profileCompletion;
   ProfileCompletionModel? get profileCompletion => _profileCompletion;
 
-  // Additional data for Profile screen
   String _financialLevel = 'Intermediate';
   String get financialLevel => _financialLevel;
 
@@ -57,9 +54,7 @@ class ProfileProvider extends ChangeNotifier {
     return name.split(RegExp(r'\s+')).first;
   }
 
-  DateTime? get birthDate {
-    return _profile?.birthDate;
-  }
+  DateTime? get birthDate => _profile?.birthDate;
 
   bool get isBirthdayToday {
     final date = birthDate;
@@ -75,14 +70,9 @@ class ProfileProvider extends ChangeNotifier {
     return (_profile?.email ?? '').isEmpty ? 'Not available' : _profile!.email;
   }
 
-  String? get photoUrl {
-    return _profile?.photoUrl;
-  }
+  String? get photoUrl => _profile?.photoUrl;
 
-  /// Load profile summary once after auth is ready.
-  /// Only call this once, after AuthProvider confirms user is authenticated.
   Future<void> loadProfileSummary() async {
-    // Prevent concurrent duplicate requests
     if (_isLoading) {
       return;
     }
@@ -94,6 +84,7 @@ class ProfileProvider extends ChangeNotifier {
 
     try {
       final response = await ApiService.get('/users/profile/summary');
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final body = jsonDecode(response.body);
         final data = body['data'];
@@ -109,7 +100,7 @@ class ProfileProvider extends ChangeNotifier {
               ? DateTime.tryParse(user['birthDate'].toString())
               : null,
           joinedAt: user['memberSince'] != null
-              ? DateTime.parse(user['memberSince'])
+              ? DateTime.tryParse(user['memberSince'].toString())
               : null,
           photoUrl: user['avatarUrl'],
         );
@@ -127,7 +118,6 @@ class ProfileProvider extends ChangeNotifier {
         _errorMessage = null;
         _errorCode = null;
       } else if (response.statusCode == 403) {
-        // Account not verified
         try {
           final body = jsonDecode(response.body);
           _errorCode = body['code'];
@@ -135,10 +125,10 @@ class ProfileProvider extends ChangeNotifier {
               'Account not verified. Please verify your email.';
         } catch (_) {
           _errorCode = 'ACCOUNT_NOT_VERIFIED';
-          _errorMessage = 'Account not verified. Please verify your email.';
+          _errorMessage =
+              'Account not verified. Please verify your email.';
         }
       } else if (response.statusCode == 401) {
-        // Unauthorized - token invalid or expired
         _errorCode = 'UNAUTHORIZED';
         _errorMessage = 'Your session has expired. Please log in again.';
       } else {
@@ -159,18 +149,25 @@ class ProfileProvider extends ChangeNotifier {
     await loadProfileSummary();
   }
 
-  // Load full profile details for Editing
   Future<bool> loadFullProfile() async {
+    if (_isLoading) {
+      return false;
+    }
+
     _isLoading = true;
     _errorMessage = null;
+    _errorCode = null;
     notifyListeners();
+
+    bool success = false;
 
     try {
       final response = await ApiService.get('/users/profile');
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final body = jsonDecode(response.body);
         final data = body['data'];
-        // getProfile returns a flat object: { id, fullName, email, phoneNumber, birthDate, gender, ... }
+
         _profile = ProfileModel(
           id: data['id']?.toString(),
           name: data['fullName']?.toString() ?? '',
@@ -181,19 +178,28 @@ class ProfileProvider extends ChangeNotifier {
               : null,
           gender: data['gender']?.toString(),
         );
-        _isLoading = false;
-        notifyListeners();
-        return true;
+
+        _errorMessage = null;
+        _errorCode = null;
+        success = true;
       } else {
-        _errorMessage = 'Failed to load full profile';
+        try {
+          final body = jsonDecode(response.body);
+          _errorMessage =
+              body['message']?.toString() ?? 'Failed to load full profile';
+        } catch (_) {
+          _errorMessage =
+              'Failed to load full profile (${response.statusCode})';
+        }
       }
     } catch (e) {
       _errorMessage = 'Error loading full profile: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
 
-    _isLoading = false;
-    notifyListeners();
-    return false;
+    return success;
   }
 
   Future<bool> updateProfile({
@@ -210,20 +216,21 @@ class ProfileProvider extends ChangeNotifier {
 
     try {
       final Map<String, dynamic> updateData = {};
+
       if (name != null) updateData['fullName'] = name;
       if (email != null) updateData['email'] = email;
       if (phone != null) updateData['phone'] = phone;
       if (gender != null) updateData['gender'] = gender;
-      if (birthDate != null)
-        updateData['birthDate'] = birthDate.toIso8601String().split('T').first;
+      if (birthDate != null) {
+        updateData['birthDate'] =
+            birthDate.toIso8601String().split('T').first;
+      }
 
       final response =
           await ApiService.patch('/users/profile', body: updateData);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Success — reload both full profile and summary (for completion)
         await loadFullProfile();
-        // Fire and forget summary refresh to update profileCompletion
         loadProfileSummary();
         _isSaving = false;
         notifyListeners();
@@ -265,7 +272,7 @@ class ProfileProvider extends ChangeNotifier {
         final body = jsonDecode(response.body);
         _errorMessage = body['message'] ?? 'Failed to change password';
       }
-    } catch (e) {
+    } catch (_) {
       _errorMessage = 'Network error during password change';
     }
 

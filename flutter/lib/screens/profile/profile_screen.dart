@@ -4,6 +4,7 @@ import 'package:alpha_app/core/utils/device.dart';
 import 'package:alpha_app/core/utils/session_state_cleaner.dart';
 import 'package:alpha_app/providers/expense_provider.dart';
 import 'package:alpha_app/providers/goal_provider.dart';
+import 'package:alpha_app/providers/language_provider.dart';
 import 'package:alpha_app/providers/profile_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
 import 'package:alpha_app/screens/analysis/financial_analysis_screen.dart';
@@ -12,6 +13,8 @@ import 'package:alpha_app/screens/profile/change_password_dialog.dart';
 import 'package:alpha_app/screens/profile/components/profile_completion_card.dart';
 import 'package:alpha_app/screens/profile/personal_info_screen.dart';
 import 'package:alpha_app/screens/profile/financial_profile_screen.dart';
+import 'package:alpha_app/screens/rating/rating_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -121,7 +124,7 @@ class ProfileScreen extends StatelessWidget {
                         // ================= HEADER =================
 
                         Text(
-                          'Profile',
+                          'profile.title'.tr(),
                           style: GoogleFonts.ibmPlexSansArabic(
                             color: isDark
                                 ? AppColors.darkText
@@ -189,7 +192,7 @@ class ProfileScreen extends StatelessWidget {
                             Expanded(
                               child: _StatisticCard(
                                 value: goalsCount.toString(),
-                                label: 'Goals',
+                                label: 'profile.goals'.tr(),
                                 icon: Icons.flag_outlined,
                                 isDark: isDark,
                                 screenW: screenW,
@@ -201,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
                             Expanded(
                               child: _StatisticCard(
                                 value: expensesCount.toString(),
-                                label: 'Expenses',
+                                label: 'profile.expenses'.tr(),
                                 icon: Icons.payments_outlined,
                                 isDark: isDark,
                                 screenW: screenW,
@@ -213,7 +216,7 @@ class ProfileScreen extends StatelessWidget {
                             Expanded(
                               child: _StatisticCard(
                                 value: memberSince,
-                                label: 'Member Since',
+                                label: 'profile.member_since'.tr(),
                                 icon: Icons.calendar_month_outlined,
                                 isDark: isDark,
                                 screenW: screenW,
@@ -229,7 +232,7 @@ class ProfileScreen extends StatelessWidget {
                         // ================= SETTINGS =================
 
                         Text(
-                          'Settings',
+                          'profile.settings'.tr(),
                           style: GoogleFonts.ibmPlexSansArabic(
                             color: isDark
                                 ? AppColors.darkText
@@ -262,7 +265,7 @@ class ProfileScreen extends StatelessWidget {
                             children: [
                               _ProfileMenuTile(
                                 icon: Icons.person_outline_rounded,
-                                title: 'Personal Information',
+                                title: 'profile.personal_information'.tr(),
                                 isDark: isDark,
                                 screenW: screenW,
                                 onTap: () {
@@ -282,7 +285,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _ProfileMenuTile(
                                 icon: Icons.account_balance_wallet_rounded,
-                                title: 'Financial Profile',
+                                title: 'profile.financial_profile'.tr(),
                                 subtitle:
                                     'View and update your financial planning details.',
                                 isDark: isDark,
@@ -306,13 +309,13 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _ProfileMenuTile(
                                 icon: Icons.notifications_none_rounded,
-                                title: 'Notifications',
+                                title: 'profile.notifications'.tr(),
                                 isDark: isDark,
                                 screenW: screenW,
                                 onTap: () {
                                   _showComingSoon(
                                     context,
-                                    'Notifications',
+                                    'profile.notifications'.tr(),
                                   );
                                 },
                               ),
@@ -321,7 +324,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _ProfileMenuTile(
                                 icon: Icons.lock_outline_rounded,
-                                title: 'Privacy & Security',
+                                title: 'profile.privacy_security'.tr(),
                                 isDark: isDark,
                                 screenW: screenW,
                                 onTap: () {
@@ -340,7 +343,7 @@ class ProfileScreen extends StatelessWidget {
                                 icon: isDark
                                     ? Icons.dark_mode_outlined
                                     : Icons.light_mode_outlined,
-                                title: 'Dark Mode',
+                                title: 'profile.dark_mode'.tr(),
                                 value: isDark,
                                 isDark: isDark,
                                 screenW: screenW,
@@ -353,7 +356,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _ProfileMenuTile(
                                 icon: Icons.analytics_outlined,
-                                title: 'Financial Analysis',
+                                title: 'profile.financial_analysis'.tr(),
                                 isDark: isDark,
                                 screenW: screenW,
                                 onTap: () {
@@ -370,9 +373,28 @@ class ProfileScreen extends StatelessWidget {
                                 isDark: isDark,
                               ),
                               _ProfileMenuTile(
+                                icon: Icons.star_outline_rounded,
+                                title: 'profile.rate_us'.tr(),
+                                isDark: isDark,
+                                screenW: screenW,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const RatingScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _ProfileDivider(
+                                isDark: isDark,
+                              ),
+                              _ProfileMenuTile(
                                 icon: Icons.language_rounded,
-                                title: 'Language',
-                                trailingText: 'English',
+                                title: 'profile.language'.tr(),
+                                trailingText: context.locale.languageCode == 'ar'
+                                    ? 'profile.arabic'.tr()
+                                    : 'profile.english'.tr(),
                                 isDark: isDark,
                                 screenW: screenW,
                                 onTap: () {
@@ -387,7 +409,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _ProfileMenuTile(
                                 icon: Icons.logout_rounded,
-                                title: 'Log Out',
+                                title: 'profile.logout'.tr(),
                                 isDark: isDark,
                                 screenW: screenW,
                                 isDanger: true,
@@ -433,11 +455,117 @@ class ProfileScreen extends StatelessWidget {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            '$feature will be available soon.',
+            'profile.coming_soon'.tr(namedArgs: {'feature': feature}),
           ),
           behavior: SnackBarBehavior.floating,
         ),
       );
+  }
+
+  static void _showLanguageDialog({
+    required BuildContext context,
+    required bool isDark,
+  }) {
+    final currentLang = context.locale.languageCode;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor:
+              isDark ? AppColors.darkBackground : AppColors.lightBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'profile.select_language'.tr(),
+            style: GoogleFonts.ibmPlexSansArabic(
+              color: isDark ? AppColors.darkText : AppColors.lightText,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                tileColor: currentLang == 'ar'
+                    ? (isDark
+                        ? AppColors.darkPrimary.withOpacity(0.15)
+                        : AppColors.lightPrimary.withOpacity(0.12))
+                    : Colors.transparent,
+                leading: const Icon(Icons.language),
+                title: Text(
+                  'profile.arabic'.tr(),
+                  style: GoogleFonts.ibmPlexSansArabic(
+                    color: isDark ? AppColors.darkText : AppColors.lightText,
+                    fontWeight: currentLang == 'ar'
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+                trailing: currentLang == 'ar'
+                    ? Icon(
+                        Icons.check_circle_rounded,
+                        color: isDark
+                            ? AppColors.darkPrimary
+                            : AppColors.lightPrimary,
+                      )
+                    : null,
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  if (currentLang != 'ar') {
+                    final langProvider =
+                        Provider.of<LanguageProvider>(context, listen: false);
+                    await langProvider.changeLanguage(context, 'ar');
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                tileColor: currentLang == 'en'
+                    ? (isDark
+                        ? AppColors.darkPrimary.withOpacity(0.15)
+                        : AppColors.lightPrimary.withOpacity(0.12))
+                    : Colors.transparent,
+                leading: const Icon(Icons.language),
+                title: Text(
+                  'profile.english'.tr(),
+                  style: GoogleFonts.ibmPlexSansArabic(
+                    color: isDark ? AppColors.darkText : AppColors.lightText,
+                    fontWeight: currentLang == 'en'
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+                trailing: currentLang == 'en'
+                    ? Icon(
+                        Icons.check_circle_rounded,
+                        color: isDark
+                            ? AppColors.darkPrimary
+                            : AppColors.lightPrimary,
+                      )
+                    : null,
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  if (currentLang != 'en') {
+                    final langProvider =
+                        Provider.of<LanguageProvider>(context, listen: false);
+                    await langProvider.changeLanguage(context, 'en');
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   static Future<void> _showEditProfileDialog({
@@ -641,74 +769,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  static Future<void> _showLanguageDialog({
-    required BuildContext context,
-    required bool isDark,
-  }) async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: isDark ? AppColors.darkBorder : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Language',
-            style: GoogleFonts.ibmPlexSansArabic(
-              color: isDark ? AppColors.darkText : AppColors.lightText,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Text('🇬🇧'),
-                title: Text(
-                  'English',
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
-                  ),
-                ),
-                trailing: Icon(
-                  Icons.check_circle_rounded,
-                  color:
-                      isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
-                ),
-                onTap: () {
-                  Navigator.pop(
-                    dialogContext,
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Text('🇯🇴'),
-                title: Text(
-                  'العربية',
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
-                  ),
-                ),
-                subtitle: Text(
-                  'سيتم ربطها لاحقًا',
-                  style: TextStyle(
-                    color:
-                        isDark ? AppColors.darkSubText : AppColors.lightSubText,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(
-                    dialogContext,
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   static Future<void> _showLogoutDialog({
     required BuildContext context,

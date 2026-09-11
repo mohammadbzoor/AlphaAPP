@@ -3,13 +3,17 @@ import 'package:alpha_app/core/utils/device.dart';
 import 'package:alpha_app/models/financial_analysis_model.dart';
 import 'package:alpha_app/providers/financial_analysis_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class FinancialAnalysisScreen extends StatefulWidget {
+  final bool autoPlayAudio;
+
   const FinancialAnalysisScreen({
     super.key,
+    this.autoPlayAudio = true,
   });
 
   @override
@@ -18,51 +22,118 @@ class FinancialAnalysisScreen extends StatefulWidget {
 }
 
 class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
-  bool _didRequestMockData = false;
+  bool _didAutoPlay = false;
+  bool _autoPlayScheduled = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_autoPlayScheduled) {
+      return;
+    }
+
+    _autoPlayScheduled = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted || _didRequestMockData) {
+      if (!mounted) {
         return;
       }
 
-      _didRequestMockData = true;
+      final provider =
+          context.read<FinancialAnalysisProvider>();
 
-      final provider = context.read<FinancialAnalysisProvider>();
-
-      // مؤقتًا للعرض والتجربة فقط.
-      // عند ربط الباك إند احذفي هذا الجزء.
-      if (!provider.hasAnalysis && !provider.isLoading) {
-        await Future<void>.value();
-      }
+      await _tryAutoPlay(provider);
     });
+  }
+
+  Future<void> _tryAutoPlay(
+    FinancialAnalysisProvider provider,
+  ) async {
+    if (!mounted ||
+        !widget.autoPlayAudio ||
+        _didAutoPlay ||
+        !provider.hasAnalysis ||
+        !provider.hasAudio ||
+        provider.isPlaying ||
+        provider.isAudioLoading) {
+      return;
+    }
+
+    _didAutoPlay = true;
+
+    try {
+      await provider.toggleAudio();
+    } catch (_) {
+      _didAutoPlay = false;
+    }
+  }
+
+  Future<void> _closeScreen(
+    FinancialAnalysisProvider provider,
+  ) async {
+    await provider.stopAudio();
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final analysisProvider = context.watch<FinancialAnalysisProvider>();
+    final analysisProvider =
+        context.watch<FinancialAnalysisProvider>();
 
-    final themeProvider = context.watch<Themeprovider>();
+    final themeProvider =
+        context.watch<Themeprovider>();
 
     final bool isDark = themeProvider.isDark;
-
     final double screenW = Device.width(context);
-
     final double screenH = Device.height(context);
 
-    return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
-      body: SafeArea(
-        child: _buildBody(
-          context: context,
-          provider: analysisProvider,
-          isDark: isDark,
-          screenW: screenW,
-          screenH: screenH,
+    if (analysisProvider.hasAnalysis &&
+        analysisProvider.hasAudio &&
+        !_didAutoPlay &&
+        widget.autoPlayAudio) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) {
+          return;
+        }
+
+        await _tryAutoPlay(
+          context.read<FinancialAnalysisProvider>(),
+        );
+      });
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (
+        didPop,
+        result,
+      ) async {
+        if (didPop) {
+          return;
+        }
+
+        await _closeScreen(
+          analysisProvider,
+        );
+      },
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppColors.darkBackground
+            : AppColors.lightBackground,
+        body: SafeArea(
+          child: _buildBody(
+            context: context,
+            provider: analysisProvider,
+            isDark: isDark,
+            screenW: screenW,
+            screenH: screenH,
+          ),
         ),
       ),
     );
@@ -78,7 +149,9 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
     if (provider.isLoading && !provider.hasAnalysis) {
       return Center(
         child: CircularProgressIndicator(
-          color: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+          color: isDark
+              ? AppColors.darkPrimary
+              : AppColors.lightPrimary,
         ),
       );
     }
@@ -94,20 +167,22 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
       );
     }
 
-    final FinancialAnalysisModel analysis = provider.analysis!;
+    final FinancialAnalysisModel analysis =
+        provider.analysis!;
 
     return RefreshIndicator(
       onRefresh: () async {
-        // لاحقًا: استدعاء API جديد بدل البيانات التجريبية.
         await Future<void>.value();
       },
-      color: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+      color: isDark
+          ? AppColors.darkPrimary
+          : AppColors.lightPrimary,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
         padding: EdgeInsets.symmetric(
-          horizontal: screenW * 0.05,
+          horizontal: screenW * 0.055,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,18 +194,16 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
             _AnalysisHeader(
               isDark: isDark,
               screenW: screenW,
-              analysisDate: provider.analysisTitleDate,
-              onBack: () {
-                provider.stopAudio();
-                Navigator.pop(context);
+              analysisDate:
+                  provider.analysisTitleDate,
+              onClose: () {
+                _closeScreen(provider);
               },
             ),
 
             SizedBox(
               height: screenH * 0.025,
             ),
-
-            // ================= AUDIO =================
 
             _AudioAnalysisCard(
               provider: provider,
@@ -140,15 +213,17 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
             ),
 
             SizedBox(
-              height: screenH * 0.025,
+              height: screenH * 0.028,
             ),
-
-            // ================= SUMMARY =================
 
             _SectionHeader(
               icon: Icons.summarize_outlined,
-              title: "Analysis Summary",
-              color: const Color(0xFF14B8A6),
+              title:
+                  'financial_analysis.analysis_summary'
+                      .tr(),
+              color: isDark
+                  ? AppColors.darkAccent
+                  : AppColors.lightAccent,
               isDark: isDark,
               screenW: screenW,
             ),
@@ -158,21 +233,24 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
             ),
 
             _SummaryCard(
-              summary: analysis.content.summary,
+              summary:
+                  analysis.content.summary,
               isDark: isDark,
               screenW: screenW,
             ),
 
             SizedBox(
-              height: screenH * 0.025,
+              height: screenH * 0.028,
             ),
-
-            // ================= METRICS =================
 
             _SectionHeader(
               icon: Icons.analytics_outlined,
-              title: "Financial Indicators",
-              color: const Color(0xFFF4C95D),
+              title:
+                  'financial_analysis.financial_indicators'
+                      .tr(),
+              color: isDark
+                  ? AppColors.darkPrimary
+                  : AppColors.lightPrimary,
               isDark: isDark,
               screenW: screenW,
             ),
@@ -183,21 +261,25 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
 
             _MetricsSection(
               metrics: analysis.metrics,
-              currency: analysis.user.currency,
+              currency:
+                  analysis.user.currency,
               isDark: isDark,
               screenW: screenW,
             ),
 
             SizedBox(
-              height: screenH * 0.025,
+              height: screenH * 0.028,
             ),
 
-            // ================= INSIGHTS =================
-
             _SectionHeader(
-              icon: Icons.lightbulb_outline_rounded,
-              title: "Key Insights",
-              color: const Color(0xFF4F9CF9),
+              icon: Icons
+                  .lightbulb_outline_rounded,
+              title:
+                  'financial_analysis.key_insights'
+                      .tr(),
+              color: const Color(
+                0xFF4F9CF9,
+              ),
               isDark: isDark,
               screenW: screenW,
             ),
@@ -207,24 +289,32 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
             ),
 
             _AnalysisItemsCard(
-              items: analysis.content.insights,
-              icon: Icons.insights_outlined,
-              color: const Color(0xFF4F9CF9),
+              items:
+                  analysis.content.insights,
+              icon:
+                  Icons.insights_outlined,
+              color: const Color(
+                0xFF4F9CF9,
+              ),
               isDark: isDark,
               screenW: screenW,
-              emptyText: "No insights are available.",
+              emptyText:
+                  'financial_analysis.no_insights'
+                      .tr(),
             ),
 
             SizedBox(
-              height: screenH * 0.025,
+              height: screenH * 0.028,
             ),
-
-            // ================= RECOMMENDATIONS =================
 
             _SectionHeader(
               icon: Icons.recommend_outlined,
-              title: "Recommendations",
-              color: const Color(0xFF34D399),
+              title:
+                  'financial_analysis.recommendations'
+                      .tr(),
+              color: isDark
+                  ? AppColors.darkPrimary
+                  : AppColors.lightPrimary,
               isDark: isDark,
               screenW: screenW,
             ),
@@ -234,57 +324,71 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
             ),
 
             _AnalysisItemsCard(
-              items: analysis.content.recommendations,
-              icon: Icons.check_circle_outline_rounded,
-              color: const Color(0xFF34D399),
+              items: analysis
+                  .content.recommendations,
+              icon: Icons
+                  .check_circle_outline_rounded,
+              color: isDark
+                  ? AppColors.darkPrimary
+                  : AppColors.lightPrimary,
               isDark: isDark,
               screenW: screenW,
-              emptyText: "No recommendations are available.",
+              emptyText:
+                  'financial_analysis.no_recommendations'
+                      .tr(),
             ),
 
-            if (provider.errorMessage != null) ...[
+            if (provider.errorMessage !=
+                null) ...[
               SizedBox(
                 height: screenH * 0.02,
               ),
               _ErrorCard(
-                message: provider.errorMessage!,
-                onClose: provider.clearError,
+                message:
+                    provider.errorMessage!,
+                onClose:
+                    provider.clearError,
+                isDark: isDark,
               ),
             ],
 
             SizedBox(
-              height: screenH * 0.03,
+              height: screenH * 0.032,
             ),
 
             SizedBox(
               width: double.infinity,
-              height: screenH * 0.065,
+              height: screenH * 0.062,
               child: ElevatedButton(
-                onPressed: () async {
-                  await provider.stopAudio();
-
-                  if (!context.mounted) {
-                    return;
-                  }
-
-                  Navigator.pop(context);
+                onPressed: () {
+                  _closeScreen(provider);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
-                  foregroundColor: AppColors.darkBorder,
+                style:
+                    ElevatedButton.styleFrom(
+                  backgroundColor: isDark
+                      ? AppColors.darkPrimary
+                      : AppColors
+                          .lightPrimary,
+                  foregroundColor:
+                      Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      12,
+                  shape:
+                      RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(
+                      15,
                     ),
                   ),
                 ),
                 child: Text(
-                  "Done",
-                  style: GoogleFonts.ibmPlexSansArabic(
-                    fontSize: screenW * 0.045,
-                    fontWeight: FontWeight.bold,
+                  'financial_analysis.done'
+                      .tr(),
+                  style: GoogleFonts
+                      .ibmPlexSansArabic(
+                    fontSize:
+                        screenW * 0.041,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
               ),
@@ -300,88 +404,103 @@ class _FinancialAnalysisScreenState extends State<FinancialAnalysisScreen> {
   }
 }
 
-// =====================================================
-// HEADER
-// =====================================================
-
 class _AnalysisHeader extends StatelessWidget {
   final bool isDark;
   final double screenW;
   final String analysisDate;
-  final VoidCallback onBack;
+  final VoidCallback onClose;
 
   const _AnalysisHeader({
     required this.isDark,
     required this.screenW,
     required this.analysisDate,
-    required this.onBack,
+    required this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
     return Row(
       children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Text(
+                'financial_analysis.title'
+                    .tr(),
+                style: GoogleFonts
+                    .ibmPlexSansArabic(
+                  color: isDark
+                      ? AppColors.darkText
+                      : AppColors.lightText,
+                  fontSize:
+                      screenW * 0.058,
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+              if (analysisDate
+                  .isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'financial_analysis.analysis_as_of'
+                      .tr(
+                    namedArgs: {
+                      'date': analysisDate,
+                    },
+                  ),
+                  style: GoogleFonts
+                      .ibmPlexSansArabic(
+                    color: isDark
+                        ? AppColors
+                            .darkSubText
+                        : AppColors
+                            .lightSubText,
+                    fontSize:
+                        screenW * 0.029,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
         InkWell(
-          onTap: onBack,
-          borderRadius: BorderRadius.circular(12),
+          onTap: onClose,
+          borderRadius:
+              BorderRadius.circular(14),
           child: Container(
-            width: screenW * 0.11,
-            height: screenW * 0.11,
+            width: screenW * 0.105,
+            height: screenW * 0.105,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF203330) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color:
+                  primaryColor.withOpacity(
+                isDark ? 0.10 : 0.07,
+              ),
+              borderRadius:
+                  BorderRadius.circular(14),
               border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(
-                        0.04,
-                      )
-                    : Colors.black.withOpacity(
-                        0.05,
-                      ),
+                color:
+                    primaryColor.withOpacity(
+                  0.22,
+                ),
               ),
             ),
             child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? AppColors.darkText : AppColors.lightText,
-              size: screenW * 0.05,
+              Icons.close_rounded,
+              color: primaryColor,
+              size: screenW * 0.058,
             ),
-          ),
-        ),
-        SizedBox(
-          width: screenW * 0.035,
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Alpha Analysis",
-                style: GoogleFonts.ibmPlexSansArabic(
-                  color: isDark ? AppColors.darkText : AppColors.lightText,
-                  fontSize: screenW * 0.062,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (analysisDate.isNotEmpty)
-                Text(
-                  "Analysis as of $analysisDate",
-                  style: GoogleFonts.ibmPlexSansArabic(
-                    color:
-                        isDark ? AppColors.darkSubText : AppColors.lightSubText,
-                    fontSize: screenW * 0.029,
-                  ),
-                ),
-            ],
           ),
         ),
       ],
     );
   }
 }
-
-// =====================================================
-// AUDIO CARD
-// =====================================================
 
 class _AudioAnalysisCard extends StatelessWidget {
   final FinancialAnalysisProvider provider;
@@ -398,53 +517,66 @@ class _AudioAnalysisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color accentColor = Color(0xFF34D399);
+    final Color accentColor = isDark
+        ? AppColors.darkAccent
+        : AppColors.lightAccent;
 
-    final double sliderValue = provider.audioProgress.clamp(
+    final Color cardColor = isDark
+        ? AppColors.darkBorder
+            .withOpacity(0.40)
+        : AppColors.lightBorder
+            .withOpacity(0.40);
+
+    final Color borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
+
+    final double sliderValue =
+        provider.audioProgress.clamp(
       0.0,
       1.0,
     );
 
+    final String speechText =
+        analysis.content.speechText ?? '';
+
     return Material(
-      color: isDark ? const Color(0xFF172624) : Colors.white,
-      borderRadius: BorderRadius.circular(22),
+      color: cardColor,
+      borderRadius:
+          BorderRadius.circular(24),
       clipBehavior: Clip.antiAlias,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        padding:
+            const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius:
+              BorderRadius.circular(24),
           border: Border.all(
-            color: accentColor.withOpacity(0.14),
+            color: borderColor,
           ),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 16,
-                    offset: const Offset(0, 7),
-                  ),
-                ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
                   width: 52,
                   height: 52,
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(
-                      0.13,
-                    ),
-                    borderRadius: BorderRadius.circular(
+                  decoration:
+                      BoxDecoration(
+                    color: accentColor
+                        .withOpacity(0.14),
+                    borderRadius:
+                        BorderRadius.circular(
                       16,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.graphic_eq_rounded,
+                  child: Icon(
+                    Icons
+                        .graphic_eq_rounded,
                     color: accentColor,
                     size: 28,
                   ),
@@ -452,37 +584,67 @@ class _AudioAnalysisCard extends StatelessWidget {
                 const SizedBox(width: 13),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
                     children: [
                       Text(
-                        "Listen to Alpha",
-                        style: GoogleFonts.ibmPlexSansArabic(
-                          color:
-                              isDark ? AppColors.darkText : AppColors.lightText,
-                          fontSize: screenW * 0.044,
-                          fontWeight: FontWeight.bold,
+                        'financial_analysis.listen_to_alpha'
+                            .tr(),
+                        style: GoogleFonts
+                            .ibmPlexSansArabic(
+                          color: isDark
+                              ? AppColors
+                                  .darkText
+                              : AppColors
+                                  .lightText,
+                          fontSize:
+                              screenW *
+                                  0.043,
+                          fontWeight:
+                              FontWeight
+                                  .bold,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(
+                        height: 3,
+                      ),
                       Text(
                         provider.hasAudio
-                            ? "Voice financial analysis"
-                            : "Audio is unavailable",
-                        style: GoogleFonts.ibmPlexSansArabic(
+                            ? provider
+                                    .isAudioLoading
+                                ? 'financial_analysis.preparing_audio'
+                                    .tr()
+                                : 'financial_analysis.voice_analysis'
+                                    .tr()
+                            : 'financial_analysis.audio_unavailable'
+                                .tr(),
+                        style: GoogleFonts
+                            .ibmPlexSansArabic(
                           color: isDark
-                              ? AppColors.darkSubText
-                              : AppColors.lightSubText,
-                          fontSize: screenW * 0.029,
+                              ? AppColors
+                                  .darkSubText
+                              : AppColors
+                                  .lightSubText,
+                          fontSize:
+                              screenW *
+                                  0.029,
                         ),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  onPressed: provider.hasAudio ? provider.replayAudio : null,
+                  onPressed:
+                      provider.hasAudio
+                          ? provider.replayAudio
+                          : null,
                   icon: Icon(
                     Icons.replay_rounded,
-                    color: provider.hasAudio ? accentColor : Colors.grey,
+                    color:
+                        provider.hasAudio
+                            ? accentColor
+                            : Colors.grey,
                   ),
                 ),
               ],
@@ -491,32 +653,46 @@ class _AudioAnalysisCard extends StatelessWidget {
             Row(
               children: [
                 InkWell(
-                  onTap: provider.hasAudio ? provider.toggleAudio : null,
-                  borderRadius: BorderRadius.circular(40),
+                  onTap:
+                      provider.hasAudio
+                          ? provider.toggleAudio
+                          : null,
+                  borderRadius:
+                      BorderRadius.circular(
+                    40,
+                  ),
                   child: Container(
                     width: 48,
                     height: 48,
-                    decoration: const BoxDecoration(
+                    decoration:
+                        BoxDecoration(
                       color: accentColor,
-                      shape: BoxShape.circle,
+                      shape:
+                          BoxShape.circle,
                     ),
-                    child: provider.isAudioLoading
+                    child: provider
+                            .isAudioLoading
                         ? const Padding(
-                            padding: EdgeInsets.all(
+                            padding:
+                                EdgeInsets.all(
                               13,
                             ),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              color: Color(0xFF09231E),
+                            child:
+                                CircularProgressIndicator(
+                              strokeWidth:
+                                  2.4,
+                              color:
+                                  Colors.white,
                             ),
                           )
                         : Icon(
                             provider.isPlaying
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                            color: const Color(
-                              0xFF09231E,
-                            ),
+                                ? Icons
+                                    .pause_rounded
+                                : Icons
+                                    .play_arrow_rounded,
+                            color:
+                                Colors.white,
                             size: 31,
                           ),
                   ),
@@ -526,56 +702,79 @@ class _AudioAnalysisCard extends StatelessWidget {
                   child: Column(
                     children: [
                       SliderTheme(
-                        data: SliderTheme.of(
+                        data:
+                            SliderTheme.of(
                           context,
                         ).copyWith(
-                          activeTrackColor: accentColor,
-                          inactiveTrackColor: accentColor.withOpacity(
+                          activeTrackColor:
+                              accentColor,
+                          inactiveTrackColor:
+                              accentColor
+                                  .withOpacity(
                             0.18,
                           ),
-                          thumbColor: accentColor,
-                          overlayColor: accentColor.withOpacity(
+                          thumbColor:
+                              accentColor,
+                          overlayColor:
+                              accentColor
+                                  .withOpacity(
                             0.10,
                           ),
                           trackHeight: 4,
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 6,
+                          thumbShape:
+                              const RoundSliderThumbShape(
+                            enabledThumbRadius:
+                                6,
                           ),
                         ),
                         child: Slider(
                           min: 0,
                           max: 1,
                           value: sliderValue,
-                          onChanged:
-                              provider.hasAudio ? provider.seekAudio : null,
+                          onChanged: provider
+                                  .hasAudio
+                              ? provider.seekAudio
+                              : null,
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
                           horizontal: 10,
                         ),
                         child: Row(
                           children: [
                             Text(
-                              provider.formatDuration(
-                                provider.position,
+                              provider
+                                  .formatDuration(
+                                provider
+                                    .position,
                               ),
-                              style: GoogleFonts.ibmPlexSansArabic(
+                              style: GoogleFonts
+                                  .ibmPlexSansArabic(
                                 color: isDark
-                                    ? AppColors.darkSubText
-                                    : AppColors.lightSubText,
+                                    ? AppColors
+                                        .darkSubText
+                                    : AppColors
+                                        .lightSubText,
                                 fontSize: 10,
                               ),
                             ),
                             const Spacer(),
                             Text(
-                              provider.formatDuration(
-                                provider.duration,
+                              provider
+                                  .formatDuration(
+                                provider
+                                    .duration,
                               ),
-                              style: GoogleFonts.ibmPlexSansArabic(
+                              style: GoogleFonts
+                                  .ibmPlexSansArabic(
                                 color: isDark
-                                    ? AppColors.darkSubText
-                                    : AppColors.lightSubText,
+                                    ? AppColors
+                                        .darkSubText
+                                    : AppColors
+                                        .lightSubText,
                                 fontSize: 10,
                               ),
                             ),
@@ -587,69 +786,95 @@ class _AudioAnalysisCard extends StatelessWidget {
                 ),
               ],
             ),
-            if ((analysis.content.speechText ?? '').trim().isNotEmpty) ...[
+            if (speechText
+                .trim()
+                .isNotEmpty) ...[
               const SizedBox(height: 14),
-              Material(
-                color: Colors.transparent,
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    dividerColor: Colors.transparent,
-                    splashColor: accentColor.withOpacity(
-                      0.08,
-                    ),
-                    highlightColor: accentColor.withOpacity(
-                      0.04,
+              Theme(
+                data: Theme.of(context)
+                    .copyWith(
+                  dividerColor:
+                      Colors.transparent,
+                  splashColor: accentColor
+                      .withOpacity(0.08),
+                  highlightColor:
+                      accentColor
+                          .withOpacity(0.04),
+                ),
+                child: ExpansionTile(
+                  tilePadding:
+                      EdgeInsets.zero,
+                  childrenPadding:
+                      const EdgeInsets.only(
+                    bottom: 4,
+                  ),
+                  backgroundColor:
+                      Colors.transparent,
+                  collapsedBackgroundColor:
+                      Colors.transparent,
+                  iconColor: accentColor,
+                  collapsedIconColor:
+                      isDark
+                          ? AppColors
+                              .darkSubText
+                          : AppColors
+                              .lightSubText,
+                  title: Text(
+                    'financial_analysis.view_transcript'
+                        .tr(),
+                    style: GoogleFonts
+                        .ibmPlexSansArabic(
+                      color: isDark
+                          ? AppColors
+                              .darkText
+                          : AppColors
+                              .lightText,
+                      fontSize: 12,
+                      fontWeight:
+                          FontWeight.w600,
                     ),
                   ),
-                  child: ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    childrenPadding: const EdgeInsets.only(
-                      bottom: 4,
-                    ),
-                    backgroundColor: Colors.transparent,
-                    collapsedBackgroundColor: Colors.transparent,
-                    iconColor: accentColor,
-                    collapsedIconColor:
-                        isDark ? AppColors.darkSubText : AppColors.lightSubText,
-                    title: Text(
-                      "View voice transcript",
-                      style: GoogleFonts.ibmPlexSansArabic(
-                        color:
-                            isDark ? AppColors.darkText : AppColors.lightText,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(
-                          13,
+                  children: [
+                    Container(
+                      width:
+                          double.infinity,
+                      padding:
+                          const EdgeInsets
+                              .all(13),
+                      decoration:
+                          BoxDecoration(
+                        color: isDark
+                            ? AppColors
+                                .darkBackground
+                            : AppColors
+                                .lightBackground,
+                        borderRadius:
+                            BorderRadius
+                                .circular(14),
+                        border: Border.all(
+                          color:
+                              borderColor,
                         ),
-                        decoration: BoxDecoration(
+                      ),
+                      child: Text(
+                        speechText,
+                        textDirection:
+                            Directionality.of(
+                          context,
+                        ),
+                        style: GoogleFonts
+                            .ibmPlexSansArabic(
                           color: isDark
-                              ? const Color(
-                                  0xFF203330,
-                                )
-                              : AppColors.lightBackground,
-                          borderRadius: BorderRadius.circular(
-                            14,
-                          ),
-                        ),
-                        child: Text(
-                          analysis.content.speechText ?? '',
-                          textDirection: TextDirection.rtl,
-                          style: GoogleFonts.ibmPlexSansArabic(
-                            color: isDark
-                                ? AppColors.darkText
-                                : AppColors.lightText,
-                            fontSize: 12,
-                            height: 1.7,
-                          ),
+                              ? AppColors
+                                  .darkText
+                              : AppColors
+                                  .lightText,
+                          fontSize: 12,
+                          height: 1.7,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -659,10 +884,6 @@ class _AudioAnalysisCard extends StatelessWidget {
     );
   }
 }
-
-// =====================================================
-// SECTION HEADER
-// =====================================================
 
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
@@ -687,8 +908,10 @@ class _SectionHeader extends StatelessWidget {
           width: 37,
           height: 37,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(11),
+            color:
+                color.withOpacity(0.12),
+            borderRadius:
+                BorderRadius.circular(11),
           ),
           child: Icon(
             icon,
@@ -700,10 +923,15 @@ class _SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.ibmPlexSansArabic(
-              color: isDark ? AppColors.darkText : AppColors.lightText,
-              fontSize: screenW * 0.045,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts
+                .ibmPlexSansArabic(
+              color: isDark
+                  ? AppColors.darkText
+                  : AppColors.lightText,
+              fontSize:
+                  screenW * 0.043,
+              fontWeight:
+                  FontWeight.bold,
             ),
           ),
         ),
@@ -711,10 +939,6 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
-// =====================================================
-// SUMMARY
-// =====================================================
 
 class _SummaryCard extends StatelessWidget {
   final String summary;
@@ -731,21 +955,34 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(17),
+      padding:
+          const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF172624) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark
+            ? AppColors.darkBorder
+                .withOpacity(0.40)
+            : AppColors.lightBorder
+                .withOpacity(0.40),
+        borderRadius:
+            BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.04)
-              : Colors.black.withOpacity(0.05),
+              ? AppColors.darkBorder
+              : AppColors.lightBorder,
         ),
       ),
       child: Text(
-        summary.trim().isEmpty ? "No summary is available." : summary,
-        textDirection: TextDirection.rtl,
-        style: GoogleFonts.ibmPlexSansArabic(
-          color: isDark ? AppColors.darkText : AppColors.lightText,
+        summary.trim().isEmpty
+            ? 'financial_analysis.no_summary'
+                .tr()
+            : summary,
+        textDirection:
+            Directionality.of(context),
+        style: GoogleFonts
+            .ibmPlexSansArabic(
+          color: isDark
+              ? AppColors.darkText
+              : AppColors.lightText,
           fontSize: screenW * 0.035,
           height: 1.8,
         ),
@@ -753,10 +990,6 @@ class _SummaryCard extends StatelessWidget {
     );
   }
 }
-
-// =====================================================
-// METRICS
-// =====================================================
 
 class _MetricsSection extends StatelessWidget {
   final AnalysisMetrics metrics;
@@ -776,31 +1009,42 @@ class _MetricsSection extends StatelessWidget {
     return Column(
       children: [
         _MetricCard(
-          title: "Savings",
+          title:
+              'financial_analysis.metrics.savings'
+                  .tr(),
           metric: metrics.savings,
           currency: currency,
           icon: Icons.savings_outlined,
-          color: const Color(0xFF34D399),
+          color:
+              const Color(0xFF34D399),
           isDark: isDark,
           screenW: screenW,
         ),
         const SizedBox(height: 12),
         _MetricCard(
-          title: "Needs",
+          title:
+              'financial_analysis.metrics.needs'
+                  .tr(),
           metric: metrics.needs,
           currency: currency,
-          icon: Icons.home_work_outlined,
-          color: const Color(0xFF4F9CF9),
+          icon:
+              Icons.home_work_outlined,
+          color:
+              const Color(0xFF4F9CF9),
           isDark: isDark,
           screenW: screenW,
         ),
         const SizedBox(height: 12),
         _MetricCard(
-          title: "Wants",
+          title:
+              'financial_analysis.metrics.wants'
+                  .tr(),
           metric: metrics.wants,
           currency: currency,
-          icon: Icons.shopping_bag_outlined,
-          color: const Color(0xFFF4C95D),
+          icon: Icons
+              .shopping_bag_outlined,
+          color:
+              const Color(0xFFF4C95D),
           isDark: isDark,
           screenW: screenW,
         ),
@@ -830,24 +1074,36 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool unavailable = metric.isUnavailable ||
-        metric.current == null ||
-        metric.target == null ||
-        metric.percent == null;
+    final bool unavailable =
+        metric.isUnavailable ||
+            metric.current == null ||
+            metric.target == null ||
+            metric.percent == null;
 
-    final double progress =
-        unavailable ? 0 : ((metric.percent ?? 0) / 100).clamp(0.0, 1.0);
+    final double progress = unavailable
+        ? 0
+        : ((metric.percent ?? 0) / 100)
+            .clamp(0.0, 1.0);
 
-    final Color statusColor = _statusColor(metric.status);
+    final Color statusColor =
+        _statusColor(metric.status);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding:
+          const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF172624) : Colors.white,
-        borderRadius: BorderRadius.circular(19),
+        color: isDark
+            ? AppColors.darkBorder
+                .withOpacity(0.40)
+            : AppColors.lightBorder
+                .withOpacity(0.40),
+        borderRadius:
+            BorderRadius.circular(20),
         border: Border.all(
-          color: color.withOpacity(0.12),
+          color: isDark
+              ? AppColors.darkBorder
+              : AppColors.lightBorder,
         ),
       ),
       child: Column(
@@ -857,9 +1113,12 @@ class _MetricCard extends StatelessWidget {
               Container(
                 width: 45,
                 height: 45,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(
+                decoration:
+                    BoxDecoration(
+                  color: color
+                      .withOpacity(0.12),
+                  borderRadius:
+                      BorderRadius.circular(
                     13,
                   ),
                 ),
@@ -872,64 +1131,97 @@ class _MetricCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.ibmPlexSansArabic(
-                        color:
-                            isDark ? AppColors.darkText : AppColors.lightText,
-                        fontSize: screenW * 0.039,
-                        fontWeight: FontWeight.bold,
+                      style: GoogleFonts
+                          .ibmPlexSansArabic(
+                        color: isDark
+                            ? AppColors
+                                .darkText
+                            : AppColors
+                                .lightText,
+                        fontSize:
+                            screenW *
+                                0.039,
+                        fontWeight:
+                            FontWeight
+                                .bold,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(
+                      height: 3,
+                    ),
                     Text(
                       unavailable
-                          ? "Insufficient data"
-                          : "${metric.current!.toStringAsFixed(2)} / "
-                              "${metric.target!.toStringAsFixed(2)} $currency",
-                      style: GoogleFonts.ibmPlexSansArabic(
+                          ? 'financial_analysis.status.unknown'
+                              .tr()
+                          : '${metric.current!.toStringAsFixed(2)} / '
+                              '${metric.target!.toStringAsFixed(2)} $currency',
+                      style: GoogleFonts
+                          .ibmPlexSansArabic(
                         color: isDark
-                            ? AppColors.darkSubText
-                            : AppColors.lightSubText,
-                        fontSize: screenW * 0.028,
+                            ? AppColors
+                                .darkSubText
+                            : AppColors
+                                .lightSubText,
+                        fontSize:
+                            screenW *
+                                0.028,
                       ),
                     ),
                   ],
                 ),
               ),
               Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment:
+                    CrossAxisAlignment.end,
                 children: [
                   Text(
-                    unavailable ? "N/A" : "${metric.percent!.toStringAsFixed(0)}%",
-                    style: GoogleFonts.ibmPlexSansArabic(
+                    unavailable
+                        ? 'N/A'
+                        : '${metric.percent!.toStringAsFixed(0)}%',
+                    style: GoogleFonts
+                        .ibmPlexSansArabic(
                       color: color,
-                      fontSize: screenW * 0.043,
-                      fontWeight: FontWeight.bold,
+                      fontSize:
+                          screenW * 0.043,
+                      fontWeight:
+                          FontWeight.bold,
                     ),
                   ),
                   Container(
-                    margin: const EdgeInsets.only(
+                    margin:
+                        const EdgeInsets.only(
                       top: 4,
                     ),
-                    padding: const EdgeInsets.symmetric(
+                    padding: const EdgeInsets
+                        .symmetric(
                       horizontal: 8,
                       vertical: 3,
                     ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.11),
-                      borderRadius: BorderRadius.circular(
+                    decoration:
+                        BoxDecoration(
+                      color: statusColor
+                          .withOpacity(0.11),
+                      borderRadius:
+                          BorderRadius.circular(
                         8,
                       ),
                     ),
                     child: Text(
-                      metric.status.label,
-                      style: GoogleFonts.ibmPlexSansArabic(
+                      _analysisStatusLabel(
+                        metric.status,
+                      ),
+                      style: GoogleFonts
+                          .ibmPlexSansArabic(
                         color: statusColor,
                         fontSize: 9,
-                        fontWeight: FontWeight.w600,
+                        fontWeight:
+                            FontWeight.w600,
                       ),
                     ),
                   ),
@@ -939,12 +1231,17 @@ class _MetricCard extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: LinearProgressIndicator(
+            borderRadius:
+                BorderRadius.circular(20),
+            child:
+                LinearProgressIndicator(
               value: progress,
               minHeight: 10,
-              backgroundColor: color.withOpacity(0.13),
-              valueColor: AlwaysStoppedAnimation<Color>(
+              backgroundColor:
+                  color.withOpacity(0.13),
+              valueColor:
+                  AlwaysStoppedAnimation<
+                      Color>(
                 color,
               ),
             ),
@@ -955,11 +1252,8 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-// =====================================================
-// ITEMS CARD
-// =====================================================
-
-class _AnalysisItemsCard extends StatelessWidget {
+class _AnalysisItemsCard
+    extends StatelessWidget {
   final List<String> items;
   final IconData icon;
   final Color color;
@@ -978,44 +1272,64 @@ class _AnalysisItemsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> displayedItems = items.isEmpty ? [emptyText] : items;
+    final List<String> displayedItems =
+        items.isEmpty
+            ? [emptyText]
+            : items;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
+      padding:
+          const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 5,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF172624) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark
+            ? AppColors.darkBorder
+                .withOpacity(0.40)
+            : AppColors.lightBorder
+                .withOpacity(0.40),
+        borderRadius:
+            BorderRadius.circular(20),
         border: Border.all(
-          color: color.withOpacity(0.10),
+          color: isDark
+              ? AppColors.darkBorder
+              : AppColors.lightBorder,
         ),
       ),
       child: Column(
         children: List.generate(
           displayedItems.length,
           (index) {
-            final String item = displayedItems[index];
+            final String item =
+                displayedItems[index];
 
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding:
+                      const EdgeInsets
+                          .symmetric(
                     vertical: 13,
                   ),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
                     children: [
                       Container(
                         width: 34,
                         height: 34,
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(
+                        decoration:
+                            BoxDecoration(
+                          color: color
+                              .withOpacity(
                             0.12,
                           ),
-                          borderRadius: BorderRadius.circular(
+                          borderRadius:
+                              BorderRadius
+                                  .circular(
                             10,
                           ),
                         ),
@@ -1031,12 +1345,20 @@ class _AnalysisItemsCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item,
-                          textDirection: TextDirection.rtl,
-                          style: GoogleFonts.ibmPlexSansArabic(
+                          textDirection:
+                              Directionality.of(
+                            context,
+                          ),
+                          style: GoogleFonts
+                              .ibmPlexSansArabic(
                             color: isDark
-                                ? AppColors.darkText
-                                : AppColors.lightText,
-                            fontSize: screenW * 0.033,
+                                ? AppColors
+                                    .darkText
+                                : AppColors
+                                    .lightText,
+                            fontSize:
+                                screenW *
+                                    0.033,
                             height: 1.65,
                           ),
                         ),
@@ -1044,16 +1366,16 @@ class _AnalysisItemsCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (index < displayedItems.length - 1)
+                if (index <
+                    displayedItems.length -
+                        1)
                   Divider(
                     height: 1,
                     color: isDark
-                        ? Colors.white.withOpacity(
-                            0.05,
-                          )
-                        : Colors.black.withOpacity(
-                            0.05,
-                          ),
+                        ? AppColors
+                            .darkBorder
+                        : AppColors
+                            .lightBorder,
                   ),
               ],
             );
@@ -1064,59 +1386,62 @@ class _AnalysisItemsCard extends StatelessWidget {
   }
 }
 
-// =====================================================
-// ERROR
-// =====================================================
-
 class _ErrorCard extends StatelessWidget {
   final String message;
   final VoidCallback onClose;
+  final bool isDark;
 
   const _ErrorCard({
     required this.message,
     required this.onClose,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color errorColor = isDark
+        ? AppColors.darkError
+        : AppColors.lightError;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(
+      padding:
+          const EdgeInsets.only(
         left: 13,
         top: 8,
         bottom: 8,
       ),
       decoration: BoxDecoration(
-        color: const Color(
-          0xFFFF6B6B,
-        ).withOpacity(0.10),
-        borderRadius: BorderRadius.circular(14),
+        color: errorColor
+            .withOpacity(0.10),
+        borderRadius:
+            BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(
-            0xFFFF6B6B,
-          ).withOpacity(0.18),
+          color: errorColor
+              .withOpacity(0.22),
         ),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            color: Color(0xFFFF6B6B),
+          Icon(
+            Icons
+                .error_outline_rounded,
+            color: errorColor,
           ),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Color(0xFFFF6B6B),
+              style: TextStyle(
+                color: errorColor,
               ),
             ),
           ),
           IconButton(
             onPressed: onClose,
-            icon: const Icon(
+            icon: Icon(
               Icons.close_rounded,
-              color: Color(0xFFFF6B6B),
+              color: errorColor,
               size: 18,
             ),
           ),
@@ -1126,11 +1451,8 @@ class _ErrorCard extends StatelessWidget {
   }
 }
 
-// =====================================================
-// EMPTY VIEW
-// =====================================================
-
-class _EmptyAnalysisView extends StatelessWidget {
+class _EmptyAnalysisView
+    extends StatelessWidget {
   final bool isDark;
   final double screenW;
   final String? errorMessage;
@@ -1145,44 +1467,63 @@ class _EmptyAnalysisView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding:
+            const EdgeInsets.all(24),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:
+              MainAxisSize.min,
           children: [
             Container(
               width: screenW * 0.27,
               height: screenW * 0.27,
               decoration: BoxDecoration(
-                color: const Color(
-                  0xFF34D399,
-                ).withOpacity(0.10),
+                color: primaryColor
+                    .withOpacity(0.10),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.analytics_outlined,
-                color: const Color(0xFF34D399),
+                color: primaryColor,
                 size: screenW * 0.13,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              "No analysis available",
-              style: GoogleFonts.ibmPlexSansArabic(
-                color: isDark ? AppColors.darkText : AppColors.lightText,
-                fontSize: screenW * 0.052,
-                fontWeight: FontWeight.bold,
+              'financial_analysis.empty_title'
+                  .tr(),
+              style: GoogleFonts
+                  .ibmPlexSansArabic(
+                color: isDark
+                    ? AppColors.darkText
+                    : AppColors.lightText,
+                fontSize:
+                    screenW * 0.052,
+                fontWeight:
+                    FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               errorMessage ??
-                  "Generate a financial analysis to view your summary, insights and recommendations.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.ibmPlexSansArabic(
-                color: isDark ? AppColors.darkSubText : AppColors.lightSubText,
-                fontSize: screenW * 0.033,
+                  'financial_analysis.empty_description'
+                      .tr(),
+              textAlign:
+                  TextAlign.center,
+              style: GoogleFonts
+                  .ibmPlexSansArabic(
+                color: isDark
+                    ? AppColors
+                        .darkSubText
+                    : AppColors
+                        .lightSubText,
+                fontSize:
+                    screenW * 0.033,
                 height: 1.6,
               ),
             ),
@@ -1192,15 +1533,28 @@ class _EmptyAnalysisView extends StatelessWidget {
               icon: const Icon(
                 Icons.refresh_rounded,
               ),
-              label: const Text(
-                "Load Analysis",
+              label: Text(
+                'financial_analysis.load_analysis'
+                    .tr(),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(
-                  0xFF34D399,
+              style: ElevatedButton
+                  .styleFrom(
+                backgroundColor:
+                    primaryColor,
+                foregroundColor:
+                    Colors.white,
+                padding:
+                    const EdgeInsets
+                        .symmetric(
+                  horizontal: 22,
+                  vertical: 13,
                 ),
-                foregroundColor: const Color(
-                  0xFF09231E,
+                shape:
+                    RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(
+                    14,
+                  ),
                 ),
               ),
             ),
@@ -1211,27 +1565,59 @@ class _EmptyAnalysisView extends StatelessWidget {
   }
 }
 
-// =====================================================
-// STATUS COLOR
-// =====================================================
+String _analysisStatusLabel(
+  AnalysisStatus status,
+) {
+  switch (status) {
+    case AnalysisStatus.onTrack:
+      return 'financial_analysis.status.on_track'
+          .tr();
+
+    case AnalysisStatus.warning:
+      return 'financial_analysis.status.warning'
+          .tr();
+
+    case AnalysisStatus.exceeded:
+      return 'financial_analysis.status.critical'
+          .tr();
+
+    case AnalysisStatus.completed:
+      return 'financial_analysis.status.on_track'
+          .tr();
+
+    case AnalysisStatus.unavailable:
+      return 'financial_analysis.status.unknown'
+          .tr();
+  }
+}
 
 Color _statusColor(
   AnalysisStatus status,
 ) {
   switch (status) {
     case AnalysisStatus.onTrack:
-      return const Color(0xFF34D399);
+      return const Color(
+        0xFF34D399,
+      );
 
     case AnalysisStatus.warning:
-      return const Color(0xFFF4C95D);
+      return const Color(
+        0xFFF4C95D,
+      );
 
     case AnalysisStatus.exceeded:
-      return const Color(0xFFFF6B6B);
+      return const Color(
+        0xFFFF6B6B,
+      );
 
     case AnalysisStatus.completed:
-      return const Color(0xFF34D399);
+      return const Color(
+        0xFF34D399,
+      );
 
     case AnalysisStatus.unavailable:
-      return const Color(0xFF8A9A96);
+      return const Color(
+        0xFF8A9A96,
+      );
   }
 }

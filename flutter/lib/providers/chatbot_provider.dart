@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
@@ -25,11 +26,11 @@ class ChatbotProvider extends ChangeNotifier {
   bool isLoading = false;
 
   List<ChatModel> messages = [
-    ChatModel(
-      message: "Hello, I’m Basira. How can I help you today?",
-      isUser: false,
-    ),
-  ];
+  ChatModel(
+    message: 'chat.welcome'.tr(),
+    isUser: false,
+  ),
+];
 
   List<String> suggestions = [
     "How can I save money?",
@@ -203,6 +204,11 @@ class ChatbotProvider extends ChangeNotifier {
 
     isListening = false;
 
+    notifyListeners();
+  }
+
+  void updateVoiceText(String text) {
+    voiceText = text;
     notifyListeners();
   }
 

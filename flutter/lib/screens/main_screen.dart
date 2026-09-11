@@ -1,22 +1,22 @@
-import 'package:alpha_app/core/utils/step_resolver.dart';
-import 'package:alpha_app/providers/onboarding_provider.dart';
-import 'package:alpha_app/providers/profile_provider.dart';
-import 'package:alpha_app/providers/home_provider.dart';
+import 'dart:io';
+
+import 'package:alpha_app/core/utils/onboarding_guard.dart';
+import 'package:alpha_app/providers/auth_provider.dart';
 import 'package:alpha_app/providers/cycle_provider.dart';
+import 'package:alpha_app/providers/language_provider.dart';
+import 'package:alpha_app/providers/onboarding_provider.dart';
 import 'package:alpha_app/screens/ai_assistant/chat_screen.dart';
 import 'package:alpha_app/screens/auth/otp_screen.dart';
 import 'package:alpha_app/screens/expenses/expenses_screen.dart';
 import 'package:alpha_app/screens/goals/goal_history.dart';
 import 'package:alpha_app/screens/home/home_screen.dart';
 import 'package:alpha_app/screens/profile/profile_screen.dart';
-import 'package:alpha_app/providers/auth_provider.dart';
-import 'dart:io';
-import 'package:alpha_app/widgets/custom_nav_bar.dart';
 import 'package:alpha_app/screens/receipts/receipt_input_screen.dart';
-import 'package:alpha_app/core/utils/onboarding_guard.dart';
+import 'package:alpha_app/widgets/custom_nav_bar.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -27,13 +27,14 @@ class MainNavigationScreen extends StatefulWidget {
   });
 
   @override
-  State<MainNavigationScreen> createState() {
-    return _MainNavigationScreenState();
-  }
+  State<MainNavigationScreen> createState() =>
+      _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState
+    extends State<MainNavigationScreen> {
   late int _currentIndex;
+
   bool _didCheckLostData = false;
 
   final List<Widget> _screens = const [
@@ -48,76 +49,138 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
 
-    _currentIndex = widget.initialIndex.clamp(0, 4);
+    _currentIndex =
+        widget.initialIndex.clamp(0, 4);
 
-    // Load profile and home data once after auth is confirmed
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Allow loading the dashboard framework, but restrict capabilities within it
-      // if the user is not onboarded.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) async {
+        if (!mounted) {
+          return;
+        }
 
-      if (!mounted) return;
+        final OnboardingProvider onboardingProvider =
+            context.read<OnboardingProvider>();
 
-      // Check for lost ImagePicker data (Android OS kills during camera)
-      // Only do this AFTER auth and onboarding are completed
-      final onboardingProvider = context.read<OnboardingProvider>();
-      if (Platform.isAndroid &&
-          !_didCheckLostData &&
-          onboardingProvider.isOnboarded) {
-        _didCheckLostData = true;
-        try {
-          final picker = ImagePicker();
-          final response = await picker.retrieveLostData();
+        if (Platform.isAndroid &&
+            !_didCheckLostData &&
+            onboardingProvider.isOnboarded) {
+          _didCheckLostData = true;
 
-          if (response.exception != null && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      'Failed to recover image: ${response.exception!.message}')),
-            );
-          } else if (!response.isEmpty && response.file != null && mounted) {
-            final cycleProvider = context.read<CycleProvider>();
-            if (!cycleProvider.hasActiveCycle) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text(
-                        'Start a financial cycle before adding receipts.')),
-              );
+          try {
+            final ImagePicker picker =
+                ImagePicker();
+
+            final LostDataResponse response =
+                await picker.retrieveLostData();
+
+            if (!mounted) {
               return;
             }
 
-            final file = File(response.file!.path);
-            if (await file.exists() && await file.length() > 0) {
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => ReceiptInputScreen(
-                  initialImage: file,
-                ),
-              ));
-            }
-          }
-        } catch (_) {}
-      }
+            if (response.exception != null) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'main_navigation.image_recovery_failed'
+                          .tr(
+                        namedArgs: {
+                          'message': response
+                                  .exception
+                                  ?.message ??
+                              '',
+                        },
+                      ),
+                    ),
+                    behavior:
+                        SnackBarBehavior.floating,
+                  ),
+                );
 
-      // Data loading (profile, home) has been moved to HomeScreen's initState
-      // to ensure a strict loading sequence and prevent double fetching.
-    });
+              return;
+            }
+
+            if (!response.isEmpty &&
+                response.file != null) {
+              final CycleProvider cycleProvider =
+                  context.read<CycleProvider>();
+
+              if (!cycleProvider.hasActiveCycle) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'main_navigation.start_cycle_first'
+                            .tr(),
+                      ),
+                      behavior:
+                          SnackBarBehavior.floating,
+                    ),
+                  );
+
+                return;
+              }
+
+              final File file =
+                  File(response.file!.path);
+
+              final bool fileExists =
+                  await file.exists();
+
+              if (!fileExists) {
+                return;
+              }
+
+              final int fileLength =
+                  await file.length();
+
+              if (!mounted ||
+                  fileLength <= 0) {
+                return;
+              }
+
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ReceiptInputScreen(
+                    initialImage: file,
+                  ),
+                ),
+              );
+            }
+          } catch (_) {
+            // نتجاهل أخطاء استعادة الصورة حتى لا يتوقف التطبيق.
+          }
+        }
+      },
+    );
   }
 
-  void _handleAccountNotVerified(BuildContext context) {
-    // Get the user's phone from storage or auth provider
-    final authProvider = context.read<AuthProvider>();
-    final phone =
-        authProvider.currentUser?['phone'] ?? authProvider.localPhoneNumber;
+  void _handleAccountNotVerified(
+    BuildContext context,
+  ) {
+    final AuthProvider authProvider =
+        context.read<AuthProvider>();
 
-    if (phone.isNotEmpty && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => OtpScreen(
-            phoneNumber: phone,
-            isRegistration: false,
-          ),
-        ),
-      );
+    final String phone =
+        authProvider.currentUser?['phone']
+                ?.toString() ??
+            authProvider.localPhoneNumber;
+
+    if (phone.isEmpty || !mounted) {
+      return;
     }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => OtpScreen(
+          phoneNumber: phone,
+          isRegistration: false,
+        ),
+      ),
+    );
   }
 
   void _changePage(int index) {
@@ -125,12 +188,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return;
     }
 
-    final onboardingProvider = context.read<OnboardingProvider>();
-    if (!onboardingProvider.isOnboarded) {
-      if (index == 1 || index == 2 || index == 3) {
-        requireOnboarding(context);
-        return;
-      }
+    final OnboardingProvider onboardingProvider =
+        context.read<OnboardingProvider>();
+
+    if (!onboardingProvider.isOnboarded &&
+        (index == 1 ||
+            index == 2 ||
+            index == 3)) {
+      requireOnboarding(context);
+      return;
     }
 
     setState(() {
@@ -140,13 +206,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+     final languageProvider = Provider.of<LanguageProvider>(context);
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(
+      bottomNavigationBar:
+          CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _changePage,
       ),

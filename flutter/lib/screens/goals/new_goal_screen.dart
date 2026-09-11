@@ -7,6 +7,7 @@ import 'package:alpha_app/widgets/app_button.dart';
 import 'package:alpha_app/widgets/custom_textfield.dart';
 import 'package:alpha_app/widgets/goals/priority_card.dart';
 import 'package:alpha_app/widgets/multi_select_chip.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +18,8 @@ class NewGoalScreen extends StatefulWidget {
   });
 
   @override
-  State<NewGoalScreen> createState() => _NewGoalScreenState();
+  State<NewGoalScreen> createState() =>
+      _NewGoalScreenState();
 }
 
 class _NewGoalScreenState extends State<NewGoalScreen> {
@@ -33,7 +35,6 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
       }
 
       _formPrepared = true;
-
       context.read<GoalProvider>().clearForm();
     });
   }
@@ -41,14 +42,31 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GoalProvider>();
-
     final themeProvider = context.watch<Themeprovider>();
 
     final bool isDark = themeProvider.isDark;
-
     final double screenW = Device.width(context);
-
     final double screenH = Device.height(context);
+
+    final Color backgroundColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+
+    final Color primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
+    final Color textColor = isDark
+        ? AppColors.darkText
+        : AppColors.lightText;
+
+    final Color subTextColor = isDark
+        ? AppColors.darkSubText
+        : AppColors.lightSubText;
+
+    final Color borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
 
     return PopScope(
       canPop: false,
@@ -61,367 +79,484 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor:
-            isDark ? AppColors.darkBackground : AppColors.lightBackground,
+        backgroundColor: backgroundColor,
         body: SafeArea(
           child: Stack(
             children: [
-              SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenW * 0.05,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: screenH * 0.022,
+              Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      screenW * 0.05,
+                      screenH * 0.022,
+                      screenW * 0.05,
+                      0,
                     ),
-
-                    _buildHeader(
+                    child: _buildHeader(
                       isDark: isDark,
                       screenW: screenW,
                     ),
-
-                    SizedBox(
-                      height: screenH * 0.012,
-                    ),
-
-                    Text(
-                      "Set a realistic financial goal and Alpha will help you track your progress.",
-                      style: GoogleFonts.ibmPlexSansArabic(
-                        color: isDark
-                            ? AppColors.darkSubText
-                            : AppColors.lightSubText,
-                        fontSize: screenW * 0.034,
-                        fontWeight: FontWeight.w500,
-                        height: 1.5,
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics:
+                          const BouncingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        screenW * 0.05,
+                        screenH * 0.012,
+                        screenW * 0.05,
+                        screenH * 0.03,
                       ),
-                    ),
-
-                    SizedBox(
-                      height: screenH * 0.03,
-                    ),
-
-                    // ================= GOAL CATEGORY =================
-
-                    _SectionTitle(
-                      title: "Choose your goal",
-                      screenW: screenW,
-                      isDark: isDark,
-                    ),
-
-                    SizedBox(
-                      height: screenH * 0.012,
-                    ),
-
-                    MultiSelectChip(
-                      items: provider.goalCategories,
-                      selectedItems: provider.selectedCategory == null
-                          ? []
-                          : [
-                              provider.selectedCategory!,
-                            ],
-                      onTap: provider.setCategory,
-                    ),
-
-                    // ================= CUSTOM GOAL NAME =================
-
-                    if (provider.selectedCategory == "Other") ...[
-                      SizedBox(
-                        height: screenH * 0.022,
-                      ),
-                      _SectionTitle(
-                        title: "Goal name",
-                        screenW: screenW,
-                        isDark: isDark,
-                      ),
-                      SizedBox(
-                        height: screenH * 0.01,
-                      ),
-                      CustomTextfield(
-                        controller: provider.customNameController,
-                        hint: "Enter goal name",
-                        type: TextFieldType.name,
-                        icon: Icons.flag_outlined,
-                        onChanged: (_) {
-                          provider.refresh();
-                        },
-                      ),
-                    ],
-
-                    SizedBox(
-                      height: screenH * 0.025,
-                    ),
-
-                    // ================= TOTAL TARGET COST =================
-
-                    _SectionTitle(
-                      title: "إجمالي قيمة الهدف",
-                      screenW: screenW,
-                      isDark: isDark,
-                    ),
-
-                    SizedBox(
-                      height: screenH * 0.01,
-                    ),
-
-                    CustomTextfield(
-                      controller: provider.amountController,
-                      hint: "Target Cost (Total)",
-                      type: TextFieldType.number,
-                      icon: Icons.payments_outlined,
-                      suffix: Padding(
-                        padding: const EdgeInsets.all(
-                          12,
-                        ),
-                        child: Text(
-                          "JOD",
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.darkSubText
-                                : AppColors.lightSubText,
-                            fontWeight: FontWeight.w600,
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'new_goal.description'.tr(),
+                            style: GoogleFonts
+                                .ibmPlexSansArabic(
+                              color: subTextColor,
+                              fontSize:
+                                  screenW * 0.034,
+                              fontWeight:
+                                  FontWeight.w500,
+                              height: 1.5,
+                            ),
                           ),
-                        ),
-                      ),
-                      onChanged: (_) {
-                        provider.refresh();
-                      },
-                    ),
+                          SizedBox(
+                            height: screenH * 0.026,
+                          ),
 
-                    SizedBox(
-                      height: screenH * 0.025,
-                    ),
+                          _GoalFormSection(
+                            title:
+                                'new_goal.choose_goal'.tr(),
+                            icon:
+                                Icons.flag_outlined,
+                            color: primaryColor,
+                            isDark: isDark,
+                            child: MultiSelectChip(
+                              items: provider
+                                  .goalCategories
+                                  .map(
+                                    (category) =>
+                                        _translatedGoalCategory(
+                                      context,
+                                      category,
+                                    ),
+                                  )
+                                  .toList(),
+                              selectedItems:
+                                  provider.selectedCategory ==
+                                          null
+                                      ? []
+                                      : [
+                                          _translatedGoalCategory(
+                                            context,
+                                            provider
+                                                .selectedCategory!,
+                                          ),
+                                        ],
+                              onTap:
+                                  (translatedCategory) {
+                                provider.setCategory(
+                                  _originalGoalCategory(
+                                    context,
+                                    translatedCategory,
+                                    provider
+                                        .goalCategories,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
 
-                    // ================= PRIORITY =================
+                          if (provider.selectedCategory ==
+                              'Other') ...[
+                            SizedBox(
+                              height: screenH * 0.018,
+                            ),
+                            _GoalFormSection(
+                              title:
+                                  'new_goal.goal_name'.tr(),
+                              icon: Icons
+                                  .edit_outlined,
+                              color: isDark
+                                  ? AppColors.darkAccent
+                                  : AppColors
+                                      .lightAccent,
+                              isDark: isDark,
+                              child: CustomTextfield(
+                                controller: provider
+                                    .customNameController,
+                                hint:
+                                    'new_goal.enter_goal_name'
+                                        .tr(),
+                                type:
+                                    TextFieldType.name,
+                                icon:
+                                    Icons.flag_outlined,
+                                onChanged: (_) {
+                                  provider.refresh();
+                                },
+                              ),
+                            ),
+                          ],
 
-                    _SectionTitle(
-                      title: "Priority",
-                      screenW: screenW,
-                      isDark: isDark,
-                    ),
+                          SizedBox(
+                            height: screenH * 0.018,
+                          ),
 
-                    SizedBox(
-                      height: screenH * 0.012,
-                    ),
+                          _GoalFormSection(
+                            title:
+                                'new_goal.total_target_cost'
+                                    .tr(),
+                            icon:
+                                Icons.payments_outlined,
+                            color: isDark
+                                ? AppColors.darkSecondary
+                                : AppColors
+                                    .lightSecondary,
+                            isDark: isDark,
+                            child: CustomTextfield(
+                              controller:
+                                  provider.amountController,
+                              hint:
+                                  'new_goal.target_cost_total'
+                                      .tr(),
+                              type:
+                                  TextFieldType.number,
+                              icon:
+                                  Icons.payments_outlined,
+                              suffix: Padding(
+                                padding:
+                                    const EdgeInsets.all(
+                                  12,
+                                ),
+                                child: Text(
+                                  'common.jod'.tr(),
+                                  style: TextStyle(
+                                    color:
+                                        subTextColor,
+                                    fontWeight:
+                                        FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (_) {
+                                provider.refresh();
+                              },
+                            ),
+                          ),
 
-                    PriorityCard(
-                      priority: provider.priority,
-                      isDark: isDark,
-                      screenW: screenW,
-                      onChanged: (value) {
-                        provider.setPriority(
-                          value.toInt(),
-                        );
-                      },
-                    ),
+                          SizedBox(
+                            height: screenH * 0.018,
+                          ),
 
-                    SizedBox(
-                      height: screenH * 0.025,
-                    ),
+                          _GoalFormSection(
+                            title:
+                                'new_goal.priority'.tr(),
+                            icon: Icons
+                                .priority_high_rounded,
+                            color: isDark
+                                ? AppColors.darkAccent
+                                : AppColors.lightAccent,
+                            isDark: isDark,
+                            child: PriorityCard(
+                              priority:
+                                  provider.priority,
+                              isDark: isDark,
+                              screenW: screenW,
+                              onChanged: (value) {
+                                provider.setPriority(
+                                  value.toInt(),
+                                );
+                              },
+                            ),
+                          ),
 
-                    // ================= TARGET DATE =================
+                          SizedBox(
+                            height: screenH * 0.018,
+                          ),
 
-                    _SectionTitle(
-                      title: "التاريخ المستهدف",
-                      screenW: screenW,
-                      isDark: isDark,
-                    ),
+                          _GoalFormSection(
+                            title:
+                                'new_goal.target_date'.tr(),
+                            icon: Icons
+                                .calendar_month_outlined,
+                            color: primaryColor,
+                            isDark: isDark,
+                            child: CustomTextfield(
+                              controller: provider
+                                  .targetDateController,
+                              hint:
+                                  'new_goal.select_target_date'
+                                      .tr(),
+                              icon: Icons
+                                  .calendar_month_outlined,
+                              type:
+                                  TextFieldType.date,
+                              readOnly: true,
+                              onTap: () {
+                                _selectGoalDate(
+                                  provider,
+                                );
+                              },
+                            ),
+                          ),
 
-                    SizedBox(
-                      height: screenH * 0.01,
-                    ),
+                          SizedBox(
+                            height: screenH * 0.018,
+                          ),
 
-                    CustomTextfield(
-                      controller: provider.targetDateController,
-                      hint: "Select your target date",
-                      icon: Icons.calendar_month_outlined,
-                      type: TextFieldType.date,
-                      readOnly: true,
-                      onTap: () {
-                        _selectGoalDate(
-                          provider,
-                        );
-                      },
-                    ),
+                          _GoalFormSection(
+                            title:
+                                'new_goal.planned_monthly_contribution'
+                                    .tr(),
+                            icon: Icons
+                                .auto_graph_rounded,
+                            color: isDark
+                                ? AppColors.darkSecondary
+                                : AppColors
+                                    .lightSecondary,
+                            isDark: isDark,
+                            trailing: provider
+                                    .isContributionManuallyEdited
+                                ? InkWell(
+                                    onTap: provider
+                                        .resetContributionToSuggestion,
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      12,
+                                    ),
+                                    child: Container(
+                                      width: 38,
+                                      height: 38,
+                                      decoration:
+                                          BoxDecoration(
+                                        color: primaryColor
+                                            .withOpacity(
+                                          0.10,
+                                        ),
+                                        borderRadius:
+                                            BorderRadius
+                                                .circular(
+                                          12,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons
+                                            .refresh_rounded,
+                                        color:
+                                            primaryColor,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                            child: CustomTextfield(
+                              controller: provider
+                                  .contributionController,
+                              hint:
+                                  'new_goal.monthly_contribution'
+                                      .tr(),
+                              type:
+                                  TextFieldType.number,
+                              icon: Icons
+                                  .auto_graph_rounded,
+                              suffix: Padding(
+                                padding:
+                                    const EdgeInsets.all(
+                                  12,
+                                ),
+                                child: Text(
+                                  'common.jod'.tr(),
+                                  style: TextStyle(
+                                    color:
+                                        subTextColor,
+                                    fontWeight:
+                                        FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (_) {
+                                provider
+                                    .onContributionEdited();
+                              },
+                            ),
+                          ),
 
-                    SizedBox(
-                      height: screenH * 0.025,
-                    ),
+                          SizedBox(
+                            height: screenH * 0.02,
+                          ),
 
-                    // ================= PLANNED CONTRIBUTION =================
+                          _AlphaGoalPreviewCard(
+                            provider: provider,
+                            isDark: isDark,
+                            screenW: screenW,
+                          ),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _SectionTitle(
-                          title: "المساهمة الشهرية المخططة",
-                          screenW: screenW,
-                          isDark: isDark,
-                        ),
-                        if (provider.isContributionManuallyEdited)
-                          IconButton(
-                            icon: Icon(Icons.refresh, color: isDark ? AppColors.darkPrimary : AppColors.lightPrimary),
-                            onPressed: () {
-                              provider.resetContributionToSuggestion();
+                          if (provider.errorMessage !=
+                              null) ...[
+                            SizedBox(
+                              height:
+                                  screenH * 0.018,
+                            ),
+                            _ErrorCard(
+                              message: provider
+                                  .errorMessage!,
+                              onClose:
+                                  provider.clearError,
+                            ),
+                          ],
+
+                          SizedBox(
+                            height: screenH * 0.03,
+                          ),
+
+                          AppButton(
+                            text:
+                                'new_goal.add_goal'.tr(),
+                            isDark: isDark,
+                            isLoading:
+                                provider.isSaving,
+                            width: double.infinity,
+                            height:
+                                screenH * 0.065,
+                            borderRadius: 14,
+                            onPressed: () async {
+                              if (!provider.isValid) {
+                                ScaffoldMessenger.of(
+                                  context,
+                                )
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      backgroundColor:
+                                          isDark
+                                              ? AppColors
+                                                  .darkError
+                                              : AppColors
+                                                  .lightError,
+                                      content: Text(
+                                        'common.complete_required_fields'
+                                            .tr(),
+                                        style: GoogleFonts
+                                            .ibmPlexSansArabic(
+                                          fontSize:
+                                              screenW *
+                                                  0.04,
+                                          fontWeight:
+                                              FontWeight
+                                                  .w500,
+                                        ),
+                                      ),
+                                      behavior:
+                                          SnackBarBehavior
+                                              .floating,
+                                    ),
+                                  );
+
+                                return;
+                              }
+
+                              final bool saved =
+                                  await provider
+                                      .saveCurrentGoal();
+
+                              if (!context.mounted) {
+                                return;
+                              }
+
+                              if (!saved) {
+                                ScaffoldMessenger.of(
+                                  context,
+                                )
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      backgroundColor:
+                                          isDark
+                                              ? AppColors
+                                                  .darkError
+                                              : AppColors
+                                                  .lightError,
+                                      content: Text(
+                                        provider.errorMessage ??
+                                            'new_goal.could_not_save'
+                                                .tr(),
+                                        style: GoogleFonts
+                                            .ibmPlexSansArabic(
+                                          fontSize:
+                                              screenW *
+                                                  0.04,
+                                          fontWeight:
+                                              FontWeight
+                                                  .w500,
+                                        ),
+                                      ),
+                                      behavior:
+                                          SnackBarBehavior
+                                              .floating,
+                                    ),
+                                  );
+
+                                return;
+                              }
+
+                              ScaffoldMessenger.of(
+                                context,
+                              )
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  SnackBar(
+                                    backgroundColor:
+                                        isDark
+                                            ? AppColors
+                                                .darkSecondary
+                                            : AppColors
+                                                .lightSecondary,
+                                    content: Text(
+                                      'new_goal.added_successfully'
+                                          .tr(),
+                                      style: GoogleFonts
+                                          .ibmPlexSansArabic(
+                                        fontSize:
+                                            screenW *
+                                                0.04,
+                                        fontWeight:
+                                            FontWeight
+                                                .w500,
+                                      ),
+                                    ),
+                                    behavior:
+                                        SnackBarBehavior
+                                            .floating,
+                                  ),
+                                );
+
+                              Navigator.pop(
+                                context,
+                                true,
+                              );
                             },
                           ),
-                      ],
-                    ),
 
-                    SizedBox(
-                      height: screenH * 0.01,
-                    ),
-
-                    CustomTextfield(
-                      controller: provider.contributionController,
-                      hint: "Monthly Contribution",
-                      type: TextFieldType.number,
-                      icon: Icons.auto_graph,
-                      suffix: Padding(
-                        padding: const EdgeInsets.all(
-                          12,
-                        ),
-                        child: Text(
-                          "JOD",
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.darkSubText
-                                : AppColors.lightSubText,
-                            fontWeight: FontWeight.w600,
+                          SizedBox(
+                            height: screenH * 0.02,
                           ),
-                        ),
-                      ),
-                      onChanged: (_) {
-                        provider.onContributionEdited();
-                      },
-                    ),
-
-                    SizedBox(
-                      height: screenH * 0.025,
-                    ),
-
-                    // ================= ALPHA PREVIEW =================
-
-                    _AlphaGoalPreviewCard(
-                      provider: provider,
-                      isDark: isDark,
-                      screenW: screenW,
-                    ),
-
-                    if (provider.errorMessage != null) ...[
-                      SizedBox(
-                        height: screenH * 0.018,
-                      ),
-                      _ErrorCard(
-                        message: provider.errorMessage!,
-                        onClose: provider.clearError,
-                      ),
-                    ],
-
-                    SizedBox(
-                      height: screenH * 0.03,
-                    ),
-
-                    // ================= SAVE BUTTON =================
-
-                    Center(
-                      child: AppButton(
-                        text: "Add Goal",
-                        isDark: isDark,
-                        isLoading: provider.isSaving,
-                        width: double.infinity,
-                        height: screenH * 0.065,
-                        onPressed: () async {
-                          if (!provider.isValid) {
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                SnackBar(
-                                  backgroundColor: isDark
-                                      ? AppColors.darkError
-                                      : AppColors.lightError,
-                                  content: Text(
-                                    "Please complete all required fields",
-                                    style: GoogleFonts.ibmPlexSansArabic(
-                                      fontSize: screenW * 0.04,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-
-                            return;
-                          }
-
-                          final bool saved = await provider.saveCurrentGoal();
-
-                          if (!context.mounted) {
-                            return;
-                          }
-
-                          if (!saved) {
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                SnackBar(
-                                  backgroundColor: isDark
-                                      ? AppColors.darkError
-                                      : AppColors.lightError,
-                                  content: Text(
-                                    provider.errorMessage ??
-                                        "Could not save goal",
-                                    style: GoogleFonts.ibmPlexSansArabic(
-                                      fontSize: screenW * 0.04,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-
-                            return;
-                          }
-
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              SnackBar(
-                                backgroundColor: isDark
-                                    ? AppColors.darkSecondary
-                                    : AppColors.lightSecondary,
-                                content: Text(
-                                  "Goal added successfully",
-                                  style: GoogleFonts.ibmPlexSansArabic(
-                                    fontSize: screenW * 0.04,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-
-                          Navigator.pop(
-                            context,
-                            true,
-                          );
-                        },
+                        ],
                       ),
                     ),
-
-                    SizedBox(
-                      height: screenH * 0.03,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+
               if (provider.isSaving)
                 Positioned.fill(
                   child: AbsorbPointer(
                     child: Container(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black
+                          .withOpacity(0.15),
                     ),
                   ),
                 ),
@@ -432,46 +567,49 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
     );
   }
 
-  // =====================================================
-  // HEADER
-  // =====================================================
-
   Widget _buildHeader({
     required bool isDark,
     required double screenW,
   }) {
+    final Color primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
     return Row(
       children: [
+        Expanded(
+          child: Text(
+            'new_goal.title'.tr(),
+            style: GoogleFonts.ibmPlexSansArabic(
+              color: isDark
+                  ? AppColors.darkText
+                  : AppColors.lightText,
+              fontSize: screenW * 0.065,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         InkWell(
           onTap: _closeScreen,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           child: Container(
             width: screenW * 0.11,
             height: screenW * 0.11,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBorder : Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: primaryColor.withOpacity(
+                isDark ? 0.10 : 0.07,
+              ),
+              borderRadius:
+                  BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                color:
+                    primaryColor.withOpacity(0.22),
               ),
             ),
             child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: isDark ? AppColors.darkText : AppColors.lightText,
-              size: screenW * 0.05,
-            ),
-          ),
-        ),
-        SizedBox(
-          width: screenW * 0.035,
-        ),
-        Expanded(
-          child: Text(
-            "Add Goal",
-            style: GoogleFonts.ibmPlexSansArabic(
-              color: isDark ? AppColors.darkText : AppColors.lightText,
-              fontSize: screenW * 0.065,
-              fontWeight: FontWeight.bold,
+              Icons.close_rounded,
+              color: primaryColor,
+              size: screenW * 0.055,
             ),
           ),
         ),
@@ -479,14 +617,11 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
     );
   }
 
-  // =====================================================
-  // DATE
-  // =====================================================
-
   Future<void> _selectGoalDate(
     GoalProvider provider,
   ) async {
-    final dynamic selectedDate = await Navigator.push(
+    final dynamic selectedDate =
+        await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => GoalDateScreen(
@@ -495,55 +630,148 @@ class _NewGoalScreenState extends State<NewGoalScreen> {
       ),
     );
 
-    if (!mounted || selectedDate == null || selectedDate is! DateTime) {
+    if (!mounted ||
+        selectedDate == null ||
+        selectedDate is! DateTime) {
       return;
     }
 
     provider.setDate(selectedDate);
   }
 
-  // =====================================================
-  // CLOSE
-  // =====================================================
-
   void _closeScreen() {
     context.read<GoalProvider>().clearForm();
-
     Navigator.pop(context);
   }
 }
 
-// =====================================================
-// SECTION TITLE
-// =====================================================
-
-class _SectionTitle extends StatelessWidget {
+class _GoalFormSection extends StatelessWidget {
   final String title;
-  final double screenW;
+  final IconData icon;
+  final Color color;
   final bool isDark;
+  final Widget child;
+  final Widget? trailing;
 
-  const _SectionTitle({
+  const _GoalFormSection({
     required this.title,
-    required this.screenW,
+    required this.icon,
+    required this.color,
     required this.isDark,
+    required this.child,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: GoogleFonts.ibmPlexSansArabic(
-        fontSize: screenW * 0.04,
-        color: isDark ? AppColors.darkSubText : AppColors.lightSubText,
-        fontWeight: FontWeight.bold,
+    final borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
+
+    final cardColor = isDark
+        ? AppColors.darkCard
+        : AppColors.lightCard;
+
+    final textColor = isDark
+        ? AppColors.darkText
+        : AppColors.lightText;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: borderColor,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.10),
+                  borderRadius:
+                      BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style:
+                      GoogleFonts.ibmPlexSansArabic(
+                    color: textColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
+          ),
+          const SizedBox(height: 13),
+          child,
+        ],
       ),
     );
   }
 }
 
-// =====================================================
-// ALPHA GOAL PREVIEW
-// =====================================================
+String _translatedGoalCategory(
+  BuildContext context,
+  String category,
+) {
+  final Map<String, String> keys = {
+    'Emergency Fund':
+        'goal_categories.emergency_fund',
+    'Laptop': 'goal_categories.laptop',
+    'Travel': 'goal_categories.travel',
+    'Car': 'goal_categories.car',
+    'Education': 'goal_categories.education',
+    'House': 'goal_categories.house',
+    'Business': 'goal_categories.business',
+    'Furniture':
+        'goal_categories.furniture',
+    'Other': 'goal_categories.other',
+  };
+
+  final key = keys[category];
+
+  return key == null
+      ? category
+      : context.tr(key);
+}
+
+String _originalGoalCategory(
+  BuildContext context,
+  String translatedCategory,
+  List<String> sourceCategories,
+) {
+  for (final originalCategory
+      in sourceCategories) {
+    if (_translatedGoalCategory(
+          context,
+          originalCategory,
+        ) ==
+        translatedCategory) {
+      return originalCategory;
+    }
+  }
+
+  return translatedCategory;
+}
 
 class _AlphaGoalPreviewCard extends StatelessWidget {
   final GoalProvider provider;
@@ -558,56 +786,64 @@ class _AlphaGoalPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
+    final Color secondaryColor = isDark
+        ? AppColors.darkSecondary
+        : AppColors.lightSecondary;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSecondary.withOpacity(0.10)
-            : AppColors.lightSecondary.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(15),
+        color: secondaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark
-              ? AppColors.darkSecondary.withOpacity(0.18)
-              : AppColors.lightSecondary.withOpacity(0.18),
+          color: secondaryColor.withOpacity(0.24),
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Container(
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkPrimary.withOpacity(0.12)
-                  : AppColors.lightPrimary.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
+              color: primaryColor.withOpacity(0.12),
+              borderRadius:
+                  BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.auto_awesome_rounded,
-              color: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+              color: primaryColor,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Alpha Preview",
-                  style: GoogleFonts.ibmPlexSansArabic(
-                    color:
-                        isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+                  'new_goal.alpha_preview'.tr(),
+                  style: GoogleFonts
+                      .ibmPlexSansArabic(
+                    color: primaryColor,
                     fontSize: screenW * 0.036,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _buildMessage(),
-                  style: GoogleFonts.ibmPlexSansArabic(
-                    color: isDark ? AppColors.darkText : AppColors.lightText,
+                  _buildMessage(context),
+                  style: GoogleFonts
+                      .ibmPlexSansArabic(
+                    color: isDark
+                        ? AppColors.darkText
+                        : AppColors.lightText,
                     fontSize: screenW * 0.032,
                     height: 1.5,
                   ),
@@ -620,38 +856,44 @@ class _AlphaGoalPreviewCard extends StatelessWidget {
     );
   }
 
-  String _buildMessage() {
+  String _buildMessage(
+    BuildContext context,
+  ) {
     if (provider.selectedCategory == null) {
-      return "Choose a goal to receive a personalized saving suggestion.";
+      return 'new_goal.preview.choose_goal'
+          .tr();
     }
 
     if (provider.targetAmountValue <= 0) {
-      return "Enter a realistic target cost so Alpha can evaluate your plan.";
+      return 'new_goal.preview.enter_target_cost'
+          .tr();
     }
 
-    if (provider.plannedContributionValue <= 0) {
-      return "Enter a realistic planned monthly contribution.";
+    if (provider.plannedContributionValue <=
+        0) {
+      return 'new_goal.preview.enter_contribution'
+          .tr();
     }
 
     if (provider.targetDate == null) {
-      return "Select a target date to complete your goal plan.";
+      return 'new_goal.preview.select_date'
+          .tr();
     }
 
     if (provider.priority >= 8) {
-      return "This is a high-priority goal. Alpha will give it more importance when analyzing your spending.";
+      return 'new_goal.preview.high_priority'
+          .tr();
     }
 
-    if (provider.plannedContributionValue < 20) {
-      return "Your planned monthly contribution is relatively low. Reaching the goal may take more time.";
+    if (provider.plannedContributionValue <
+        20) {
+      return 'new_goal.preview.low_contribution'
+          .tr();
     }
 
-    return "Your goal setup looks realistic. Alpha will track your progress and help you stay consistent.";
+    return 'new_goal.preview.realistic'.tr();
   }
 }
-
-// =====================================================
-// ERROR CARD
-// =====================================================
 
 class _ErrorCard extends StatelessWidget {
   final String message;
@@ -664,10 +906,12 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = context.watch<Themeprovider>().isDark;
+    final bool isDark =
+        context.watch<Themeprovider>().isDark;
 
-    final Color errorColor =
-        isDark ? AppColors.darkError : AppColors.lightError;
+    final Color errorColor = isDark
+        ? AppColors.darkError
+        : AppColors.lightError;
 
     return Container(
       width: double.infinity,
@@ -693,7 +937,8 @@ class _ErrorCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: GoogleFonts.ibmPlexSansArabic(
+              style:
+                  GoogleFonts.ibmPlexSansArabic(
                 color: errorColor,
               ),
             ),

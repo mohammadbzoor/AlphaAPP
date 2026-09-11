@@ -1,16 +1,13 @@
 import 'package:alpha_app/core/utils/app_colors.dart';
-import 'package:alpha_app/core/utils/device.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class ChatInput extends StatelessWidget {
   final TextEditingController controller;
-
   final Function(String) onSend;
-
   final VoidCallback onVoice;
-
   final bool isLoading;
 
   const ChatInput({
@@ -23,18 +20,24 @@ class ChatInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenW = Device.width(context);
-    final screenH = Device.height(context);
-    final themeprovider = Provider.of<Themeprovider>(context);
+    final themeProvider =
+        context.watch<Themeprovider>();
+
+    final isDark = themeProvider.isDark;
+
+    final secondaryColor = isDark
+        ? AppColors.darkSecondary
+        : AppColors.lightSecondary;
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 12,
         vertical: 8,
       ),
       decoration: BoxDecoration(
-        color:
-            themeprovider.isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        color: isDark
+            ? AppColors.darkBorder
+            : AppColors.lightBorder,
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
@@ -43,16 +46,24 @@ class ChatInput extends StatelessWidget {
             child: TextField(
               controller: controller,
               enabled: !isLoading,
+              textInputAction: TextInputAction.send,
+              onSubmitted: isLoading
+                  ? null
+                  : (value) {
+                      onSend(value);
+                    },
               style: TextStyle(
-                color: themeprovider.isDark
+                color: isDark
                     ? AppColors.darkText
                     : AppColors.lightText,
                 fontWeight: FontWeight.w400,
               ),
               decoration: InputDecoration(
-                hintText: "Ask Basira anything...",
+                hintText: context.tr(
+                  'chat.input_hint',
+                ),
                 hintStyle: TextStyle(
-                  color: themeprovider.isDark
+                  color: isDark
                       ? AppColors.darkSubText
                       : AppColors.lightSubText,
                 ),
@@ -61,24 +72,35 @@ class ChatInput extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: isLoading ? null : onVoice,
+            onPressed:
+                isLoading ? null : onVoice,
             icon: Icon(
               Icons.mic,
-              color: themeprovider.isDark
-                  ? AppColors.darkSecondary
-                  : AppColors.lightSecondary,
+              color: isLoading
+                  ? secondaryColor.withOpacity(0.4)
+                  : secondaryColor,
             ),
           ),
           IconButton(
-            onPressed: isLoading ? null : () {
-              onSend(controller.text);
-            },
-            icon: isLoading 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : Icon(Icons.send,
-                color: (themeprovider.isDark
-                    ? AppColors.darkSecondary
-                    : AppColors.lightSecondary)),
+            onPressed: isLoading
+                ? null
+                : () {
+                    onSend(controller.text);
+                  },
+            icon: isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child:
+                        CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: secondaryColor,
+                    ),
+                  )
+                : Icon(
+                    Icons.send,
+                    color: secondaryColor,
+                  ),
           ),
         ],
       ),

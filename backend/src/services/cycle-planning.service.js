@@ -137,24 +137,33 @@ class CyclePlanningService {
       const actualGoalAllocationsTotal = await CyclePlanningRepository.getGoalCycleAllocationsTotal(conn, userId, cycleId);
 
       // System EF Capacity
-      const [efRows] = await conn.execute(
+      let [efRows] = await conn.execute(
         `SELECT current_balance, target_amount FROM goals 
          WHERE user_id = ? AND goal_type = 'emergency_fund' AND is_system_managed = TRUE`,
         [userId]
       );
 
-      if (emergencyFundPercentage > 0 && efRows.length === 0) {
-        throw new AppError('System managed emergency fund not found.', 422, 'SYSTEM_EMERGENCY_FUND_NOT_FOUND');
+      if (efRows.length === 0 && emergencyFundPercentage > 0) {
+        await conn.execute(
+          `INSERT INTO goals (user_id, name, goal_type, target_amount, current_balance, planned_contribution, planning_mode, status, is_system_managed)
+           VALUES (?, 'صندوق الطوارئ', 'emergency_fund', 1000, 0, 0, 'contribution_based', 'active', TRUE)`,
+          [userId]
+        );
+        [efRows] = await conn.execute(
+          `SELECT current_balance, target_amount FROM goals 
+           WHERE user_id = ? AND goal_type = 'emergency_fund' AND is_system_managed = TRUE`,
+          [userId]
+        );
       }
 
       const emergencyFundBalance = efRows.length > 0 ? Number(efRows[0].current_balance) : 0;
       const emergencyFundTarget = efRows.length > 0 ? Number(efRows[0].target_amount) : 0;
       
-      const remainingEmergencyCapacity = Math.max(emergencyFundTarget - emergencyFundBalance, 0);
+      const remainingEmergencyCapacity = emergencyFundTarget > 0 ? Math.max(emergencyFundTarget - emergencyFundBalance, 0) : Infinity;
 
       // Calculation
       const requestedEmergencyFundAmount = Math.round(plannedSavings * (emergencyFundPercentage / 100));
-      const effectiveEmergencyFundAmount = Math.min(requestedEmergencyFundAmount, remainingEmergencyCapacity);
+      const effectiveEmergencyFundAmount = requestedEmergencyFundAmount;
 
       if (effectiveEmergencyFundAmount + actualGoalAllocationsTotal > plannedSavings) {
         throw new AppError('Emergency Fund and goal allocations exceed planned savings.', 422, 'SAVINGS_EXCEEDED');
@@ -234,7 +243,7 @@ class CyclePlanningService {
 
     const { SavingsAccountingService } = require('./savings-accounting.service');
     const { emergencyFundBalance, emergencyFundTarget } = await SavingsAccountingService.getEmergencyFundBalance(userId);
-    const remainingEmergencyCapacity = Math.max(emergencyFundTarget - emergencyFundBalance, 0);
+    const remainingEmergencyCapacity = emergencyFundTarget > 0 ? Math.max(emergencyFundTarget - emergencyFundBalance, 0) : Infinity;
 
     return {
       cycleId,
@@ -286,24 +295,33 @@ class CyclePlanningService {
       const actualGoalAllocationsTotal = await CyclePlanningRepository.getGoalCycleAllocationsTotal(conn, userId, cycleId);
 
       // System EF Capacity
-      const [efRows] = await conn.execute(
+      let [efRows] = await conn.execute(
         `SELECT current_balance, target_amount FROM goals 
          WHERE user_id = ? AND goal_type = 'emergency_fund' AND is_system_managed = TRUE`,
         [userId]
       );
 
-      if (emergencyFundPercentage > 0 && efRows.length === 0) {
-        throw new AppError('System managed emergency fund not found.', 422, 'SYSTEM_EMERGENCY_FUND_NOT_FOUND');
+      if (efRows.length === 0 && emergencyFundPercentage > 0) {
+        await conn.execute(
+          `INSERT INTO goals (user_id, name, goal_type, target_amount, current_balance, planned_contribution, planning_mode, status, is_system_managed)
+           VALUES (?, 'صندوق الطوارئ', 'emergency_fund', 1000, 0, 0, 'contribution_based', 'active', TRUE)`,
+          [userId]
+        );
+        [efRows] = await conn.execute(
+          `SELECT current_balance, target_amount FROM goals 
+           WHERE user_id = ? AND goal_type = 'emergency_fund' AND is_system_managed = TRUE`,
+          [userId]
+        );
       }
 
       const emergencyFundBalance = efRows.length > 0 ? Number(efRows[0].current_balance) : 0;
       const emergencyFundTarget = efRows.length > 0 ? Number(efRows[0].target_amount) : 0;
       
-      const remainingEmergencyCapacity = Math.max(emergencyFundTarget - emergencyFundBalance, 0);
+      const remainingEmergencyCapacity = emergencyFundTarget > 0 ? Math.max(emergencyFundTarget - emergencyFundBalance, 0) : Infinity;
 
       // Calculation
       const requestedEmergencyFundAmount = Math.round(plannedSavings * (emergencyFundPercentage / 100));
-      const effectiveEmergencyFundAmount = Math.min(requestedEmergencyFundAmount, remainingEmergencyCapacity);
+      const effectiveEmergencyFundAmount = requestedEmergencyFundAmount;
 
       if (effectiveEmergencyFundAmount + actualGoalAllocationsTotal > plannedSavings) {
         throw new AppError('Emergency Fund and goal allocations exceed planned savings.', 422, 'SAVINGS_EXCEEDED');

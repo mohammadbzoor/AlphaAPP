@@ -7,6 +7,7 @@ import 'package:alpha_app/providers/cycle_provider.dart';
 import 'package:alpha_app/providers/financial_profile_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/core/utils/device.dart';
@@ -82,7 +83,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
       _draft = widget.transactions[index];
 
       _transactionType = _draft.transactionType;
-      if (_draft.sourceType == 'image' && _transactionType == null) {
+      if ((_draft.sourceType == 'image' || _draft.sourceType == 'voice') && _transactionType == null) {
         _transactionType = 'expense';
       }
 
@@ -95,13 +96,11 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
       if (_bucket == 'needs' &&
           _category != null &&
           !FinanceMappings.needsCategories.values.contains(_category)) {
-        _category = null;
+        _category = 'other';
       } else if (_bucket == 'wants' &&
           _category != null &&
           !FinanceMappings.wantsCategories.values.contains(_category)) {
-        _category = null;
-      } else if (_bucket == null) {
-        _category = null;
+        _category = 'other';
       }
 
       if (_transactionType == 'income') {
@@ -161,9 +160,9 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
     final cycleProvider = context.read<CycleProvider>();
     if (!cycleProvider.hasActiveCycle) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
             content:
-                Text('Start a financial cycle before adding transactions.')),
+                Text('start_financial_cycle_first'.tr())),
       );
       return;
     }
@@ -228,16 +227,16 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
         if (mounted) {
           if (error.contains('CYCLE_NOT_FOUND') ||
               error.contains('NO_ACTIVE_FINANCIAL_CYCLE')) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(
-                    'Start a financial cycle before adding transactions.')));
+                    'start_financial_cycle_first'.tr())));
           } else if (response.statusCode == 401 || response.statusCode == 403) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Authentication failed. Please log in again.')));
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('authentication_failed'.tr())));
           } else if (response.statusCode >= 500) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content:
-                    Text('Unable to save the transaction. Please try again.')));
+                    Text('unable_to_save_transaction'.tr())));
           } else {
             ScaffoldMessenger.of(context)
                 .showSnackBar(SnackBar(content: Text(error)));
@@ -248,13 +247,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
       if (mounted) {
         if (e.toString().contains('SocketException') ||
             e.toString().contains('TimeoutException')) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(
-                  'Unable to connect to the server. Check your connection and try again.')));
+                  'server_connection_failed'.tr())));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content:
-                  Text('Unable to save the transaction. Please try again.')));
+                  Text('unable_to_save_transaction'.tr())));
         }
       }
     } finally {
@@ -318,126 +317,126 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
     final amountText = _amountController.text.replaceAll(',', '');
     final amount = double.tryParse(amountText);
 
-    if (_movementType == null) warnings.add('Movement Type');
-    if (_transactionType == null) warnings.add('Transaction Type');
+    if (_movementType == null) warnings.add('movement_type'.tr());
+    if (_transactionType == null) warnings.add('transaction_type'.tr());
 
     if (_transactionType == 'expense') {
-      if (_bucket == null) warnings.add('Expense Type');
-      if (_category == null) warnings.add('Category');
-      if (_nameController.text.trim().isEmpty) warnings.add('Expense Name');
-      if (amount == null || amount <= 0) warnings.add('Amount');
+      if (_bucket == null) warnings.add('expense_type'.tr());
+      if (_category == null) warnings.add('category'.tr());
+      if (_nameController.text.trim().isEmpty) warnings.add('expense_name'.tr());
+      if (amount == null || amount <= 0) warnings.add('amount'.tr());
 
       if (_movementType == 'occasional') {
-        if (_paymentMethod == null) warnings.add('Payment Method');
+        if (_paymentMethod == null) warnings.add('payment_method'.tr());
         if (_draft.transactionDate == null) {
-          warnings.add('Transaction Date');
+          warnings.add('transaction_date'.tr());
         } else if (_isDateInFuture(_draft.transactionDate)) {
-          warnings.add('Transaction Date (must not be in the future)');
+          warnings.add('transaction_date_future_error'.tr());
         }
       } else {
-        if (_frequency == null) warnings.add('Coverage Period');
-        if (_flexibility == null) warnings.add('Flexibility');
-        if (_nextDueDate == null) warnings.add('Next Due Date');
+        if (_frequency == null) warnings.add('coverage_period'.tr());
+        if (_flexibility == null) warnings.add('flexibility'.tr());
+        if (_nextDueDate == null) warnings.add('next_due_date'.tr());
       }
     } else if (_transactionType == 'income') {
       if (_category == null || _category!.trim().isEmpty)
-        warnings.add('Source');
-      if (_nameController.text.trim().isEmpty) warnings.add('Description');
-      if (amount == null || amount <= 0) warnings.add('Amount');
+        warnings.add('source'.tr());
+      if (_nameController.text.trim().isEmpty) warnings.add('description'.tr());
+      if (amount == null || amount <= 0) warnings.add('amount'.tr());
       if (_movementType == 'occasional') {
         if (_draft.transactionDate == null) {
-          warnings.add('Income Date');
+          warnings.add('income_date'.tr());
         } else if (_isDateInFuture(_draft.transactionDate)) {
-          warnings.add('Income Date (must not be in the future)');
+          warnings.add('transaction_date_future_error'.tr());
         }
       } else {
-        if (_frequency == null) warnings.add('Coverage Period');
-        if (_nextDueDate == null) warnings.add('Next Due Date');
+        if (_frequency == null) warnings.add('coverage_period'.tr());
+        if (_nextDueDate == null) warnings.add('next_due_date'.tr());
       }
     }
 
-    if (currency == null) warnings.add('Currency profile missing');
+    if (currency == null) warnings.add('currency_profile_missing'.tr());
 
     return warnings;
   }
 
   String? get _disabledReason {
-    if (_movementType == null) return 'Select a movement type.';
-    if (_transactionType == null) return 'Select a transaction type.';
+    if (_movementType == null) return 'movement_type_required_message'.tr();
+    if (_transactionType == null) return 'transaction_type_required_message'.tr();
 
     final amountText = _amountController.text.replaceAll(',', '');
     final amount = double.tryParse(amountText);
 
     if (_movementType == 'occasional') {
       if (_transactionType == 'expense') {
-        if (_bucket == null) return 'Select an expense type.';
-        if (_category == null) return 'Select a category.';
+        if (_bucket == null) return 'expense_type_required_message'.tr();
+        if (_category == null) return 'category_required_message'.tr();
         if (_nameController.text.trim().isEmpty)
-          return 'Enter an expense name.';
-        if (amount == null || amount <= 0) return 'Enter a valid amount.';
-        if (_paymentMethod == null) return 'Select a payment method.';
+          return 'expense_name_required_message'.tr();
+        if (amount == null || amount <= 0) return 'enter_valid_amount'.tr();
+        if (_paymentMethod == null) return 'payment_method_required_message'.tr();
         if (_draft.transactionDate == null ||
             _isDateInFuture(_draft.transactionDate))
-          return 'Select a valid transaction date.';
+          return 'valid_transaction_date_required'.tr();
       } else {
         if (_category == null || _category!.trim().isEmpty)
-          return 'Select a source.';
-        if (_nameController.text.trim().isEmpty) return 'Enter a description.';
-        if (amount == null || amount <= 0) return 'Enter a valid amount.';
+          return 'source_required_message'.tr();
+        if (_nameController.text.trim().isEmpty) return 'description_required_message'.tr();
+        if (amount == null || amount <= 0) return 'enter_valid_amount'.tr();
         if (_draft.transactionDate == null ||
             _isDateInFuture(_draft.transactionDate))
-          return 'Select a valid transaction date.';
+          return 'valid_transaction_date_required'.tr();
       }
     } else {
       if (_transactionType == 'expense') {
-        if (_bucket == null) return 'Select an expense type.';
-        if (_category == null) return 'Select a category.';
+        if (_bucket == null) return 'expense_type_required_message'.tr();
+        if (_category == null) return 'category_required_message'.tr();
         if (_nameController.text.trim().isEmpty)
-          return 'Enter an expense name.';
-        if (amount == null || amount <= 0) return 'Enter a valid amount.';
-        if (_frequency == null) return 'Select a coverage period.';
-        if (_flexibility == null) return 'Select flexibility.';
-        if (_nextDueDate == null) return 'Select a valid next due date.';
+          return 'expense_name_required_message'.tr();
+        if (amount == null || amount <= 0) return 'enter_valid_amount'.tr();
+        if (_frequency == null) return 'coverage_period_required_message'.tr();
+        if (_flexibility == null) return 'flexibility_required_message'.tr();
+        if (_nextDueDate == null) return 'valid_next_due_date_required'.tr();
       } else {
         if (_category == null || _category!.trim().isEmpty)
-          return 'Select a source.';
-        if (_nameController.text.trim().isEmpty) return 'Enter a description.';
-        if (amount == null || amount <= 0) return 'Enter a valid amount.';
-        if (_frequency == null) return 'Select a coverage period.';
-        if (_nextDueDate == null) return 'Select a valid next due date.';
+          return 'source_required_message'.tr();
+        if (_nameController.text.trim().isEmpty) return 'description_required_message'.tr();
+        if (amount == null || amount <= 0) return 'enter_valid_amount'.tr();
+        if (_frequency == null) return 'coverage_period_required_message'.tr();
+        if (_nextDueDate == null) return 'valid_next_due_date_required'.tr();
       }
     }
 
     return null;
   }
 
-  final List<String> _movementTypeLabels = ['Occasional', 'Recurring'];
+  List<String> get _movementTypeLabels => ['occasional'.tr(), 'recurring'.tr()];
   String? get _movementTypeLabel => _movementType == 'occasional'
-      ? 'Occasional'
-      : (_movementType == 'recurring' ? 'Recurring' : null);
+      ? 'occasional'.tr()
+      : (_movementType == 'recurring' ? 'recurring'.tr() : null);
 
-  final List<String> _expenseTypeLabels = ['Need', 'Want'];
+  List<String> get _expenseTypeLabels => ['need'.tr(), 'want'.tr()];
   String? get _expenseTypeLabel =>
-      _bucket == 'needs' ? 'Need' : (_bucket == 'wants' ? 'Want' : null);
+      _bucket == 'needs' ? 'need'.tr() : (_bucket == 'wants' ? 'want'.tr() : null);
 
-  final List<String> _frequencyLabels = [
-    'Weekly',
-    'Monthly',
-    'Quarterly',
-    'Yearly'
+  List<String> get _frequencyLabels => [
+    'weekly'.tr(),
+    'monthly'.tr(),
+    'quarterly'.tr(),
+    'yearly'.tr(),
   ];
   String? get _frequencyLabel {
-    if (_frequency == 'weekly') return 'Weekly';
-    if (_frequency == 'monthly') return 'Monthly';
-    if (_frequency == 'quarterly') return 'Quarterly';
-    if (_frequency == 'yearly') return 'Yearly';
+    if (_frequency == 'weekly') return 'weekly'.tr();
+    if (_frequency == 'monthly') return 'monthly'.tr();
+    if (_frequency == 'quarterly') return 'quarterly'.tr();
+    if (_frequency == 'yearly') return 'yearly'.tr();
     return null;
   }
 
-  final List<String> _flexibilityLabels = ['Fixed', 'Flexible'];
+  List<String> get _flexibilityLabels => ['fixed'.tr(), 'flexible'.tr()];
   String? get _flexibilityLabel {
-    if (_flexibility == 'fixed') return 'Fixed';
-    if (_flexibility == 'flexible') return 'Flexible';
+    if (_flexibility == 'fixed') return 'fixed'.tr();
+    if (_flexibility == 'flexible') return 'flexible'.tr();
     return null;
   }
 
@@ -481,16 +480,16 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
     if (_initFailed) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Review Error')),
+        appBar: AppBar(title: Text('review_error'.tr())),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Unable to open the transaction review.'),
+              Text('unable_to_open_transaction_review'.tr()),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Back'),
+                child: Text('back'.tr()),
               ),
             ],
           ),
@@ -548,7 +547,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                     if (isExpense) ...[
                       // Movement Type
                       _SectionTitle(
-                          title: "Movement Type",
+                          title: 'movement_type'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.012),
@@ -557,7 +556,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                         selected: _movementTypeLabel,
                         onTap: (val) {
                           setState(() {
-                            _movementType = val == 'Occasional'
+                            _movementType = val == 'occasional'.tr()
                                 ? 'occasional'
                                 : 'recurring';
                             if (_movementType == 'occasional') {
@@ -572,7 +571,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Expense Type
                       _SectionTitle(
-                          title: "Expense Type",
+                          title: 'expense_type'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.012),
@@ -581,7 +580,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                         selected: _expenseTypeLabel,
                         onTap: (val) {
                           setState(() {
-                            _bucket = val == 'Need' ? 'needs' : 'wants';
+                            _bucket = val == 'need'.tr() ? 'needs' : 'wants';
                             _category = null;
                           });
                         },
@@ -590,11 +589,11 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Category
                       _SectionTitle(
-                          title: "Category", screenW: screenW, isDark: isDark),
+                          title: 'category'.tr(), screenW: screenW, isDark: isDark),
                       SizedBox(height: screenH * 0.012),
                       if (_bucket == null)
                         Text(
-                          "Select an expense type to view categories.",
+                          'select_expense_type_first'.tr(),
                           style: GoogleFonts.ibmPlexSansArabic(
                             color: isDark
                                 ? AppColors.darkSubText
@@ -623,13 +622,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Expense Name
                       _SectionTitle(
-                          title: "Expense Name",
+                          title: 'expense_name'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.01),
                       CustomTextfield(
                         controller: _nameController,
-                        hint: "Enter expense name",
+                        hint: 'enter_expense_name'.tr(),
                         type: TextFieldType.name,
                         icon: Icons.receipt_long_outlined,
                         onChanged: (val) {
@@ -641,11 +640,11 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Amount
                       _SectionTitle(
-                          title: "Amount", screenW: screenW, isDark: isDark),
+                          title: 'amount'.tr(), screenW: screenW, isDark: isDark),
                       SizedBox(height: screenH * 0.01),
                       CustomTextfield(
                         controller: _amountController,
-                        hint: "Enter amount",
+                        hint: 'enter_amount'.tr(),
                         type: TextFieldType.number,
                         icon: Icons.payments_outlined,
                         suffix: Padding(
@@ -663,7 +662,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                       if (isRecurring) ...[
                         // Coverage Period
                         _SectionTitle(
-                            title: "Coverage Period",
+                            title: 'coverage_period'.tr(),
                             screenW: screenW,
                             isDark: isDark),
                         SizedBox(height: screenH * 0.012),
@@ -673,10 +672,10 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                               _frequencyLabel != null ? [_frequencyLabel!] : [],
                           onTap: (val) {
                             setState(() {
-                              if (val == 'Weekly') _frequency = 'weekly';
-                              if (val == 'Monthly') _frequency = 'monthly';
-                              if (val == 'Quarterly') _frequency = 'quarterly';
-                              if (val == 'Yearly') _frequency = 'yearly';
+                              if (val == 'weekly'.tr()) _frequency = 'weekly';
+                              if (val == 'monthly'.tr()) _frequency = 'monthly';
+                              if (val == 'quarterly'.tr()) _frequency = 'quarterly';
+                              if (val == 'yearly'.tr()) _frequency = 'yearly';
                             });
                           },
                         ),
@@ -684,7 +683,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                         // Flexibility
                         _SectionTitle(
-                            title: "Flexibility",
+                            title: 'flexibility'.tr(),
                             screenW: screenW,
                             isDark: isDark),
                         SizedBox(height: screenH * 0.012),
@@ -693,8 +692,8 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                           selected: _flexibilityLabel,
                           onTap: (val) {
                             setState(() {
-                              if (val == 'Fixed') _flexibility = 'fixed';
-                              if (val == 'Flexible') _flexibility = 'flexible';
+                              if (val == 'fixed'.tr()) _flexibility = 'fixed';
+                              if (val == 'flexible'.tr()) _flexibility = 'flexible';
                             });
                           },
                         ),
@@ -702,13 +701,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                         // Next Due Date
                         _SectionTitle(
-                            title: "Next Due Date",
+                            title: 'next_due_date'.tr(),
                             screenW: screenW,
                             isDark: isDark),
                         SizedBox(height: screenH * 0.01),
                         CustomTextfield(
                           controller: _dateController,
-                          hint: "Select due date",
+                          hint: 'select_due_date'.tr(),
                           type: TextFieldType.date,
                           icon: Icons.calendar_month_outlined,
                           readOnly: true,
@@ -737,7 +736,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                       ] else ...[
                         // Payment Method
                         _SectionTitle(
-                            title: "Payment Method",
+                            title: 'payment_method'.tr(),
                             screenW: screenW,
                             isDark: isDark),
                         SizedBox(height: screenH * 0.012),
@@ -755,13 +754,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                         // Transaction Date
                         _SectionTitle(
-                            title: "Transaction Date",
+                            title: 'transaction_date'.tr(),
                             screenW: screenW,
                             isDark: isDark),
                         SizedBox(height: screenH * 0.01),
                         CustomTextfield(
                           controller: _dateController,
-                          hint: "Select transaction date",
+                          hint: 'select_transaction_date'.tr(),
                           type: TextFieldType.date,
                           icon: Icons.calendar_month_outlined,
                           readOnly: true,
@@ -789,7 +788,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                           Padding(
                             padding: EdgeInsets.only(top: screenH * 0.01),
                             child: Text(
-                              "The extracted date is in the future. Please select a valid transaction date.",
+                              'transaction_date_future_error'.tr(),
                               style: GoogleFonts.ibmPlexSansArabic(
                                 color: isDark
                                     ? AppColors.darkError
@@ -806,16 +805,16 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                     if (!isExpense) ...[
                       // Transaction Type
                       _SectionTitle(
-                          title: "Transaction Type",
+                          title: 'transaction_type'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.012),
                       OptionChip(
-                        items: const ["Expense", "Income"],
-                        selected: "Income",
+                        items: ['expense'.tr(), 'income'.tr()],
+                        selected: 'income'.tr(),
                         onTap: (val) {
                           setState(() {
-                            _transactionType = val.toLowerCase();
+                            _transactionType = val == 'expense'.tr() ? 'expense' : 'income';
                           });
                         },
                       ),
@@ -823,13 +822,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Income Type or Source
                       _SectionTitle(
-                          title: "Income Type or Source",
+                          title: 'income_type_source'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.01),
                       CustomTextfield(
                         controller: _sourceController,
-                        hint: "Enter source",
+                        hint: 'enter_source'.tr(),
                         type: TextFieldType.name,
                         icon: Icons.source_outlined,
                         onChanged: (val) {
@@ -841,13 +840,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Description
                       _SectionTitle(
-                          title: "Description",
+                          title: 'description'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.01),
                       CustomTextfield(
                         controller: _nameController,
-                        hint: "Enter description",
+                        hint: 'enter_description'.tr(),
                         type: TextFieldType.name,
                         icon: Icons.receipt_long_outlined,
                         onChanged: (val) {
@@ -859,11 +858,11 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Amount
                       _SectionTitle(
-                          title: "Amount", screenW: screenW, isDark: isDark),
+                          title: 'amount'.tr(), screenW: screenW, isDark: isDark),
                       SizedBox(height: screenH * 0.01),
                       CustomTextfield(
                         controller: _amountController,
-                        hint: "Enter amount",
+                        hint: 'enter_amount'.tr(),
                         type: TextFieldType.number,
                         icon: Icons.payments_outlined,
                         suffix: Padding(
@@ -880,13 +879,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Income Date
                       _SectionTitle(
-                          title: "Income Date",
+                          title: 'income_date'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.01),
                       CustomTextfield(
                         controller: _dateController,
-                        hint: "Select income date",
+                        hint: 'select_income_date'.tr(),
                         type: TextFieldType.date,
                         icon: Icons.calendar_month_outlined,
                         readOnly: true,
@@ -919,7 +918,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                         Padding(
                           padding: EdgeInsets.only(top: screenH * 0.01),
                           child: Text(
-                            "The extracted date is in the future. Please select a valid transaction date.",
+                            'transaction_date_future_error'.tr(),
                             style: GoogleFonts.ibmPlexSansArabic(
                               color: isDark
                                   ? AppColors.darkError
@@ -933,7 +932,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                       // Movement Type
                       _SectionTitle(
-                          title: "Movement Type",
+                          title: 'movement_type'.tr(),
                           screenW: screenW,
                           isDark: isDark),
                       SizedBox(height: screenH * 0.012),
@@ -942,7 +941,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                         selected: _movementTypeLabel,
                         onTap: (val) {
                           setState(() {
-                            _movementType = val == 'Occasional'
+                            _movementType = val == 'occasional'.tr()
                                 ? 'occasional'
                                 : 'recurring';
                             if (_movementType == 'occasional') {
@@ -957,7 +956,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                       if (isRecurring) ...[
                         // Coverage Period
                         _SectionTitle(
-                            title: "Coverage Period",
+                            title: 'coverage_period'.tr(),
                             screenW: screenW,
                             isDark: isDark),
                         SizedBox(height: screenH * 0.012),
@@ -967,10 +966,10 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                               _frequencyLabel != null ? [_frequencyLabel!] : [],
                           onTap: (val) {
                             setState(() {
-                              if (val == 'Weekly') _frequency = 'weekly';
-                              if (val == 'Monthly') _frequency = 'monthly';
-                              if (val == 'Quarterly') _frequency = 'quarterly';
-                              if (val == 'Yearly') _frequency = 'yearly';
+                              if (val == 'weekly'.tr()) _frequency = 'weekly';
+                              if (val == 'monthly'.tr()) _frequency = 'monthly';
+                              if (val == 'quarterly'.tr()) _frequency = 'quarterly';
+                              if (val == 'yearly'.tr()) _frequency = 'yearly';
                             });
                           },
                         ),
@@ -980,13 +979,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
 
                     // Note
                     _SectionTitle(
-                        title: "Note (optional)",
+                        title: 'note_optional'.tr(),
                         screenW: screenW,
                         isDark: isDark),
                     SizedBox(height: screenH * 0.01),
                     CustomTextfield(
                       controller: _noteController,
-                      hint: "Add a note",
+                      hint: 'add_note'.tr(),
                       type: TextFieldType.name,
                       icon: Icons.notes_rounded,
                     ),
@@ -1012,7 +1011,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                     ],
 
                     AppButton(
-                      text: "Confirm and Save",
+                      text: 'confirm_and_save'.tr(),
                       isDark: isDark,
                       isLoading: _isSaving,
                       width: double.infinity,
@@ -1084,7 +1083,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Review Transaction",
+                'review_transaction'.tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                   color: isDark ? AppColors.darkText : AppColors.lightText,
                   fontSize: screenW * 0.065,
@@ -1093,7 +1092,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
               ),
               if (widget.transactions.length > 1)
                 Text(
-                  "Transaction ${_currentIndex + 1} of ${widget.transactions.length}",
+                  'transaction_progress'.tr(namedArgs: {'current': '${_currentIndex + 1}', 'total': '${widget.transactions.length}'}),
                   style: GoogleFonts.ibmPlexSansArabic(
                     color:
                         isDark ? AppColors.darkSubText : AppColors.lightSubText,
@@ -1115,8 +1114,10 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
   }) {
     final confidence = _draft.confidence ?? 0.0;
     final source = _draft.sourceType == 'voice'
-        ? 'Voice'
-        : (_draft.sourceType == 'image' ? 'Image' : 'Manual');
+        ? 'source_types.voice'.tr()
+        : (_draft.sourceType == 'image'
+            ? 'source_types.image'.tr()
+            : 'source_types.manual'.tr());
 
     return Container(
       padding: EdgeInsets.all(screenW * 0.04),
@@ -1144,7 +1145,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
                   size: screenW * 0.05),
               SizedBox(width: screenW * 0.02),
               Text(
-                "AI Analysis",
+                'ai_analysis'.tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
                   color: isDark ? AppColors.darkText : AppColors.lightText,
                   fontSize: screenW * 0.045,
@@ -1157,7 +1158,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Confidence:",
+              Text('confidence'.tr() + ':',
                   style: GoogleFonts.ibmPlexSansArabic(
                       color: isDark
                           ? AppColors.darkSubText
@@ -1174,7 +1175,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Source:",
+              Text('source'.tr() + ':',
                   style: GoogleFonts.ibmPlexSansArabic(
                       color: isDark
                           ? AppColors.darkSubText
@@ -1191,13 +1192,13 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Status:",
+              Text('status'.tr() + ':',
                   style: GoogleFonts.ibmPlexSansArabic(
                       color: isDark
                           ? AppColors.darkSubText
                           : AppColors.lightSubText,
                       fontSize: screenW * 0.035)),
-              Text(needsReview ? "Review required" : "Ready to save",
+              Text(needsReview ? 'review_required'.tr() : 'ready_to_save'.tr(),
                   style: GoogleFonts.ibmPlexSansArabic(
                       color: needsReview
                           ? Colors.orange
@@ -1233,7 +1234,7 @@ class _TransactionReviewScreenState extends State<TransactionReviewScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Review required before saving",
+              'review_required_before_save'.tr(),
               style: GoogleFonts.ibmPlexSansArabic(
                 color: Colors.orange,
                 fontWeight: FontWeight.bold,

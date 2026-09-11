@@ -1,15 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:alpha_app/core/utils/app_colors.dart';
+import 'package:alpha_app/core/utils/device.dart';
+import 'package:alpha_app/core/utils/step_resolver.dart';
 import 'package:alpha_app/providers/onboarding_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
-import 'package:alpha_app/core/utils/step_resolver.dart';
-import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/widgets/option_chip.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:provider/provider.dart';
 
 class OnboardingPersonalInfoScreen extends StatefulWidget {
-  const OnboardingPersonalInfoScreen({super.key});
+  const OnboardingPersonalInfoScreen({
+    super.key,
+  });
 
   @override
   State<OnboardingPersonalInfoScreen> createState() =>
@@ -20,19 +24,28 @@ class _OnboardingPersonalInfoScreenState
     extends State<OnboardingPersonalInfoScreen> {
   String? _gender = 'Female';
   String? _maritalStatus = 'Single';
+
   bool _isHeadOfHousehold = false;
   bool _contributesToExpenses = false;
   bool _isStudent = false;
+
   int _familySize = 1;
+
   bool _isNavigating = false;
 
   Future<void> _submit() async {
-    if (_isNavigating) return;
-    setState(() => _isNavigating = true);
+    if (_isNavigating) {
+      return;
+    }
+
+    setState(() {
+      _isNavigating = true;
+    });
 
     try {
-      final provider = Provider.of<OnboardingProvider>(context, listen: false);
+      final provider = context.read<OnboardingProvider>();
 
+      // نفس أسماء الحقول والقيم التي يعتمد عليها الباك.
       final data = {
         'gender': _gender?.toLowerCase(),
         'maritalStatus': _maritalStatus?.toLowerCase(),
@@ -42,170 +55,547 @@ class _OnboardingPersonalInfoScreenState
         'contributesToExpenses': _contributesToExpenses,
       };
 
+      // نفس استدعاء الباك.
       final success = await provider.savePersonalInfo(data);
-      if (!mounted) return;
+
+      if (!mounted) {
+        return;
+      }
 
       if (success) {
-        replaceWithOnboardingStep(context, provider.nextStep);
-      } else if (provider.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(provider.errorMessage!)),
+        // نفس الانتقال الذي يحدده الباك.
+        replaceWithOnboardingStep(
+          context,
+          provider.nextStep,
         );
+
+        return;
+      }
+
+      if (provider.errorMessage != null) {
+        final themeProvider = context.read<Themeprovider>();
+        final isDark = themeProvider.isDark;
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                provider.errorMessage!,
+                style: GoogleFonts.ibmPlexSansArabic(),
+              ),
+              backgroundColor: isDark
+                  ? AppColors.darkError
+                  : AppColors.lightError,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
       }
     } finally {
       if (mounted) {
-        setState(() => _isNavigating = false);
+        setState(() {
+          _isNavigating = false;
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<OnboardingProvider>(context);
-    final themeProvider = Provider.of<Themeprovider>(context);
+    final screenW = Device.width(context);
+    final screenH = Device.height(context);
+
+    final provider = context.watch<OnboardingProvider>();
+    final themeProvider = context.watch<Themeprovider>();
+
     final isDark = themeProvider.isDark;
 
+    final backgroundColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+
+    final textColor =
+        isDark ? AppColors.darkText : AppColors.lightText;
+
+    final subTextColor = isDark
+        ? AppColors.darkSubText
+        : AppColors.lightSubText;
+
+    final primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
+    final secondaryColor = isDark
+        ? AppColors.darkSecondary
+        : AppColors.lightSecondary;
+
+    final borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
+
+    final errorColor =
+        isDark ? AppColors.darkError : AppColors.lightError;
+
+    final isLoading =
+        provider.isLoading || _isNavigating;
+
+    final genderValues = <String>[
+      'Female',
+      'Male',
+    ];
+
+    final maritalStatusValues = <String>[
+      'Single',
+      'Married',
+      'Other',
+    ];
+
+    final yesNoValues = <String>[
+      'Yes',
+      'No',
+    ];
+
+    String translateGender(String value) {
+      switch (value) {
+        case 'Female':
+          return 'personal_info.female'.tr();
+        case 'Male':
+          return 'personal_info.male'.tr();
+        default:
+          return value;
+      }
+    }
+
+    String translateMaritalStatus(String value) {
+      switch (value) {
+        case 'Single':
+          return 'personal_info.single'.tr();
+        case 'Married':
+          return 'personal_info.married'.tr();
+        case 'Other':
+          return 'personal_info.other'.tr();
+        default:
+          return value;
+      }
+    }
+
+    String translateYesNo(String value) {
+      return value == 'Yes'
+          ? 'personal_info.yes'.tr()
+          : 'personal_info.no'.tr();
+    }
+
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      resizeToAvoidBottomInset: true,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          physics: const BouncingScrollPhysics(),
+          keyboardDismissBehavior:
+              ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            screenW * 0.055,
+            screenH * 0.025,
+            screenW * 0.055,
+            screenH * 0.035,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
               Text(
-                'Personal Information',
+                'personal_info.step'.tr(
+                  namedArgs: {
+                    'current': '1',
+                    'total': '3',
+                  },
+                ),
                 style: GoogleFonts.ibmPlexSansArabic(
-                  fontSize: 28,
+                  fontSize: screenW * 0.038,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.darkAccent
+                      : AppColors.lightAccent,
+                ),
+              ),
+
+              SizedBox(
+                height: screenH * 0.012,
+              ),
+
+              Text(
+                'personal_info.title'.tr(),
+                style: GoogleFonts.ibmPlexSansArabic(
+                  fontSize: screenW * 0.075,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.darkText : AppColors.lightText,
+                  color: textColor,
+                  height: 1.2,
                 ),
               ),
-              const SizedBox(height: 8),
+
+              SizedBox(
+                height: screenH * 0.01,
+              ),
+
               Text(
-                'Accurate data means sharper advice from Alpha',
+                'personal_info.description'.tr(),
                 style: GoogleFonts.ibmPlexSansArabic(
-                  fontSize: 14,
+                  fontSize: screenW * 0.036,
                   fontWeight: FontWeight.w500,
-                  color:
-                      isDark ? AppColors.darkSubText : AppColors.lightSubText,
+                  color: subTextColor,
+                  height: 1.5,
                 ),
               ),
-              const SizedBox(height: 20),
+
+              SizedBox(
+                height: screenH * 0.022,
+              ),
+
               LinearPercentIndicator(
-                lineHeight: 12.0,
+                lineHeight: screenH * 0.015,
                 percent: 0.25,
                 padding: EdgeInsets.zero,
-                backgroundColor:
-                    isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                progressColor:
-                    isDark ? AppColors.darkSecondary : AppColors.lightSecondary,
+                backgroundColor: borderColor,
+                progressColor: secondaryColor,
                 barRadius: const Radius.circular(10),
+                animation: false,
               ),
-              const SizedBox(height: 30),
-              _SectionTitle('Gender', isDark: isDark),
-              const SizedBox(height: 10),
-              OptionChip(
-                items: const ['Female', 'Male'],
-                selected: _gender,
-                onTap: (val) => setState(() => _gender = val),
+
+              SizedBox(
+                height: screenH * 0.03,
               ),
-              const SizedBox(height: 20),
-              _SectionTitle('Marital Status', isDark: isDark),
-              const SizedBox(height: 10),
-              OptionChip(
-                items: const ['Single', 'Married', 'Other'],
-                selected: _maritalStatus,
-                onTap: (val) => setState(() => _maritalStatus = val),
+
+              _OptionSection(
+                title: 'personal_info.gender'.tr(),
+                isDark: isDark,
+                screenW: screenW,
+                child: OptionChip(
+                  items: genderValues
+                      .map(translateGender)
+                      .toList(),
+                  selected: _gender == null
+                      ? null
+                      : translateGender(_gender!),
+                  onTap: (translatedValue) {
+                    if (isLoading) {
+                      return;
+                    }
+
+                    final translatedItems = genderValues
+                        .map(translateGender)
+                        .toList();
+
+                    final selectedIndex = translatedItems
+                        .indexOf(translatedValue);
+
+                    if (selectedIndex != -1) {
+                      setState(() {
+                        _gender =
+                            genderValues[selectedIndex];
+                      });
+                    }
+                  },
+                ),
               ),
-              const SizedBox(height: 20),
-              _SectionTitle('Are you head of household?', isDark: isDark),
-              const SizedBox(height: 10),
-              OptionChip(
-                items: const ['Yes', 'No'],
-                selected: _isHeadOfHousehold ? 'Yes' : 'No',
-                onTap: (val) =>
-                    setState(() => _isHeadOfHousehold = (val == 'Yes')),
+
+              SizedBox(
+                height: screenH * 0.022,
               ),
-              const SizedBox(height: 20),
-              _SectionTitle('Do you contribute to family expenses?',
-                  isDark: isDark),
-              const SizedBox(height: 10),
-              OptionChip(
-                items: const ['Yes', 'No'],
-                selected: _contributesToExpenses ? 'Yes' : 'No',
-                onTap: (val) =>
-                    setState(() => _contributesToExpenses = (val == 'Yes')),
+
+              _OptionSection(
+                title: 'personal_info.marital_status'.tr(),
+                isDark: isDark,
+                screenW: screenW,
+                child: OptionChip(
+                  items: maritalStatusValues
+                      .map(translateMaritalStatus)
+                      .toList(),
+                  selected: _maritalStatus == null
+                      ? null
+                      : translateMaritalStatus(
+                          _maritalStatus!,
+                        ),
+                  onTap: (translatedValue) {
+                    if (isLoading) {
+                      return;
+                    }
+
+                    final translatedItems =
+                        maritalStatusValues
+                            .map(
+                              translateMaritalStatus,
+                            )
+                            .toList();
+
+                    final selectedIndex = translatedItems
+                        .indexOf(translatedValue);
+
+                    if (selectedIndex != -1) {
+                      setState(() {
+                        _maritalStatus =
+                            maritalStatusValues[
+                                selectedIndex];
+                      });
+                    }
+                  },
+                ),
               ),
-              const SizedBox(height: 20),
-              _SectionTitle('Are you university student?', isDark: isDark),
-              const SizedBox(height: 10),
-              OptionChip(
-                items: const ['Yes', 'No'],
-                selected: _isStudent ? 'Yes' : 'No',
-                onTap: (val) => setState(() => _isStudent = (val == 'Yes')),
+
+              SizedBox(
+                height: screenH * 0.022,
               ),
-              const SizedBox(height: 20),
-              _SectionTitle('Family members:', isDark: isDark),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _CounterButton(
-                    icon: Icons.remove,
-                    onTap: () {
-                      if (_familySize > 1) setState(() => _familySize--);
-                    },
-                    isDark: isDark,
+
+              _OptionSection(
+                title:
+                    'personal_info.head_of_household'.tr(),
+                isDark: isDark,
+                screenW: screenW,
+                child: OptionChip(
+                  items: yesNoValues
+                      .map(translateYesNo)
+                      .toList(),
+                  selected: translateYesNo(
+                    _isHeadOfHousehold
+                        ? 'Yes'
+                        : 'No',
                   ),
-                  const SizedBox(width: 20),
-                  Text(
-                    '$_familySize',
-                    style: GoogleFonts.ibmPlexSansArabic(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: isDark
-                          ? AppColors.darkPrimary
-                          : AppColors.lightPrimary,
+                  onTap: (translatedValue) {
+                    if (isLoading) {
+                      return;
+                    }
+
+                    setState(() {
+                      _isHeadOfHousehold =
+                          translatedValue ==
+                              translateYesNo('Yes');
+                    });
+                  },
+                ),
+              ),
+
+              if (!_isHeadOfHousehold) ...[
+                SizedBox(
+                  height: screenH * 0.022,
+                ),
+                _OptionSection(
+                  title:
+                      'personal_info.contribute_expenses'
+                          .tr(),
+                  isDark: isDark,
+                  screenW: screenW,
+                  child: OptionChip(
+                    items: yesNoValues
+                        .map(translateYesNo)
+                        .toList(),
+                    selected: translateYesNo(
+                      _contributesToExpenses
+                          ? 'Yes'
+                          : 'No',
                     ),
+                    onTap: (translatedValue) {
+                      if (isLoading) {
+                        return;
+                      }
+
+                      setState(() {
+                        _contributesToExpenses =
+                            translatedValue ==
+                                translateYesNo('Yes');
+                      });
+                    },
                   ),
-                  const SizedBox(width: 20),
-                  _CounterButton(
-                    icon: Icons.add,
-                    onTap: () => setState(() => _familySize++),
-                    isDark: isDark,
-                  ),
-                ],
+                ),
+              ],
+
+              SizedBox(
+                height: screenH * 0.022,
               ),
-              const SizedBox(height: 40),
+
+              _OptionSection(
+                title:
+                    'personal_info.university_student'.tr(),
+                isDark: isDark,
+                screenW: screenW,
+                child: OptionChip(
+                  items: yesNoValues
+                      .map(translateYesNo)
+                      .toList(),
+                  selected: translateYesNo(
+                    _isStudent ? 'Yes' : 'No',
+                  ),
+                  onTap: (translatedValue) {
+                    if (isLoading) {
+                      return;
+                    }
+
+                    setState(() {
+                      _isStudent =
+                          translatedValue ==
+                              translateYesNo('Yes');
+                    });
+                  },
+                ),
+              ),
+
+              SizedBox(
+                height: screenH * 0.022,
+              ),
+
+              _OptionSection(
+                title:
+                    'personal_info.family_members'.tr(),
+                isDark: isDark,
+                screenW: screenW,
+                child: Row(
+                  mainAxisAlignment:
+                      MainAxisAlignment.start,
+                  children: [
+                    _CounterButton(
+                      icon: Icons.remove,
+                      onTap: isLoading
+                          ? null
+                          : () {
+                              if (_familySize > 1) {
+                                setState(() {
+                                  _familySize--;
+                                });
+                              }
+                            },
+                      isDark: isDark,
+                      screenW: screenW,
+                    ),
+
+                    Container(
+                      constraints: BoxConstraints(
+                        minWidth: screenW * 0.18,
+                      ),
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenW * 0.04,
+                      ),
+                      child: Text(
+                        '$_familySize',
+                        style:
+                            GoogleFonts.ibmPlexSansArabic(
+                          fontSize: screenW * 0.06,
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    _CounterButton(
+                      icon: Icons.add,
+                      onTap: isLoading
+                          ? null
+                          : () {
+                              setState(() {
+                                _familySize++;
+                              });
+                            },
+                      isDark: isDark,
+                      screenW: screenW,
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(
+                height: screenH * 0.03,
+              ),
+
               SizedBox(
                 width: double.infinity,
-                height: 55,
+                height: screenH * 0.065,
                 child: ElevatedButton(
-                  onPressed: provider.isLoading ? null : _submit,
+                  // نفس دالة الإرسال للباك.
+                  onPressed: isLoading ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
+                    backgroundColor: primaryColor,
+                    disabledBackgroundColor:
+                        primaryColor.withOpacity(0.55),
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius:
+                          BorderRadius.circular(12),
                     ),
                   ),
-                  child: provider.isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          'Next',
-                          style: GoogleFonts.ibmPlexSansArabic(
-                            fontSize: 18,
+                  child: isLoading
+                      ? SizedBox(
+                          width: screenW * 0.055,
+                          height: screenW * 0.055,
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth: 2.5,
                             color: isDark
                                 ? AppColors.darkBackground
                                 : AppColors.lightCard,
+                          ),
+                        )
+                      : Text(
+                          'personal_info.next'.tr(),
+                          style: GoogleFonts
+                              .ibmPlexSansArabic(
+                            fontSize: screenW * 0.047,
+                            color: isDark
+                                ? AppColors.darkText
+                                : AppColors.lightText,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                 ),
               ),
-              const SizedBox(height: 20),
+
+              if (provider.errorMessage != null) ...[
+                SizedBox(
+                  height: screenH * 0.014,
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
+                  decoration: BoxDecoration(
+                    color: errorColor.withOpacity(0.10),
+                    borderRadius:
+                        BorderRadius.circular(12),
+                    border: Border.all(
+                      color:
+                          errorColor.withOpacity(0.30),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        color: errorColor,
+                        size: screenW * 0.05,
+                      ),
+                      SizedBox(
+                        width: screenW * 0.02,
+                      ),
+                      Expanded(
+                        child: Text(
+                          provider.errorMessage!,
+                          style: GoogleFonts
+                              .ibmPlexSansArabic(
+                            color: errorColor,
+                            fontSize: screenW * 0.033,
+                            fontWeight:
+                                FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              SizedBox(
+                height: screenH * 0.02,
+              ),
             ],
           ),
         ),
@@ -214,20 +604,81 @@ class _OnboardingPersonalInfoScreenState
   }
 }
 
+class _OptionSection extends StatelessWidget {
+  final String title;
+  final bool isDark;
+  final double screenW;
+  final Widget child;
+
+  const _OptionSection({
+    required this.title,
+    required this.isDark,
+    required this.screenW,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
+
+    final cardColor = isDark
+        ? AppColors.darkCard.withOpacity(0.55)
+        : AppColors.lightCard;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(
+        screenW * 0.035,
+      ),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: borderColor,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          _SectionTitle(
+            title: title,
+            isDark: isDark,
+            screenW: screenW,
+          ),
+          SizedBox(
+            height: screenW * 0.035,
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionTitle extends StatelessWidget {
   final String title;
   final bool isDark;
+  final double screenW;
 
-  const _SectionTitle(this.title, {required this.isDark});
+  const _SectionTitle({
+    required this.title,
+    required this.isDark,
+    required this.screenW,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Text(
       title,
       style: GoogleFonts.ibmPlexSansArabic(
-        fontSize: 16,
+        fontSize: screenW * 0.04,
+        color: isDark
+            ? AppColors.darkSubText
+            : AppColors.lightSubText,
         fontWeight: FontWeight.bold,
-        color: isDark ? AppColors.darkSubText : AppColors.lightSubText,
       ),
     );
   }
@@ -235,32 +686,48 @@ class _SectionTitle extends StatelessWidget {
 
 class _CounterButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool isDark;
+  final double screenW;
 
   const _CounterButton({
     required this.icon,
     required this.onTap,
     required this.isDark,
+    required this.screenW,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final accentColor = isDark
+        ? AppColors.darkAccent
+        : AppColors.lightAccent;
+
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 45,
-        height: 45,
+        width: screenW * 0.115,
+        height: screenW * 0.115,
         decoration: BoxDecoration(
+          color: accentColor.withOpacity(
+            onTap == null ? 0.04 : 0.10,
+          ),
+          borderRadius:
+              BorderRadius.circular(12),
           border: Border.all(
-            color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+            color: accentColor.withOpacity(
+              onTap == null ? 0.35 : 1,
+            ),
             width: 1.5,
           ),
-          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
           icon,
-          color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+          color: accentColor.withOpacity(
+            onTap == null ? 0.4 : 1,
+          ),
+          size: screenW * 0.06,
         ),
       ),
     );

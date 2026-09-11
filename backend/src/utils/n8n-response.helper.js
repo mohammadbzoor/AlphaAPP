@@ -3,17 +3,26 @@ const { AppError } = require('./app-error');
 function isTransactionCandidate(obj) {
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
     
-    // amount exists, is numeric/numeric string, finite, > 0
-    if (obj.amount === undefined || obj.amount === null) return false;
-    const numAmount = Number(obj.amount);
-    if (isNaN(numAmount) || !isFinite(numAmount) || numAmount <= 0) return false;
+    const amountVal = obj.amount ?? obj.total ?? obj.totalAmount ?? obj.price ?? obj.sum;
+    const numAmount = Number(amountVal);
+    const hasValidAmount = !isNaN(numAmount) && isFinite(numAmount) && numAmount >= 0;
 
-    // At least one other transaction field
-    const recognizedFields = ['description', 'date', 'transactionDate', 'bucket', 'category', 'paymentMethod', 'payment_method', 'confidence', 'sourceType', 'source_type', 'transactionType', 'transaction_type'];
+    const recognizedFields = [
+        'description', 'date', 'transactionDate', 'bucket', 'category', 
+        'paymentMethod', 'payment_method', 'confidence', 'sourceType', 
+        'source_type', 'transactionType', 'transaction_type', 'merchant', 
+        'store', 'storeName', 'store_name', 'items', 'text'
+    ];
+
+    let fieldCount = 0;
     for (const field of recognizedFields) {
-        if (obj[field] !== undefined) {
-            return true;
+        if (obj[field] !== undefined && obj[field] !== null) {
+            fieldCount++;
         }
+    }
+
+    if (hasValidAmount || fieldCount >= 1) {
+        return true;
     }
     return false;
 }
@@ -51,7 +60,15 @@ function normalizeReceiptAnalysisResponse(value, depth = 0) {
         try {
             parsed = JSON.parse(trimmed);
         } catch (e) {
-            throw new AppError('The receipt analysis response could not be processed.', 502, 'RECEIPT_ANALYSIS_INVALID_RESPONSE');
+            // Return raw text as a candidate description if JSON parsing fails
+            return [{
+                amount: 0,
+                currency: 'JOD',
+                description: trimmed.slice(0, 100),
+                category: 'other',
+                sourceType: 'image',
+                transactionType: 'expense'
+            }];
         }
         return normalizeReceiptAnalysisResponse(parsed, depth + 1);
     }
@@ -63,8 +80,9 @@ function normalizeReceiptAnalysisResponse(value, depth = 0) {
             if (first.output !== undefined) return normalizeReceiptAnalysisResponse(first.output, depth + 1);
             if (first.data !== undefined) return normalizeReceiptAnalysisResponse(first.data, depth + 1);
             if (first.result !== undefined) return normalizeReceiptAnalysisResponse(first.result, depth + 1);
+            if (first.receipt !== undefined) return normalizeReceiptAnalysisResponse(first.receipt, depth + 1);
+            if (first.transactions !== undefined) return normalizeReceiptAnalysisResponse(first.transactions, depth + 1);
         }
-        // Keep it if it's an array
         return value;
     }
 
@@ -74,15 +92,46 @@ function normalizeReceiptAnalysisResponse(value, depth = 0) {
         if (value.data !== undefined) return normalizeReceiptAnalysisResponse(value.data, depth + 1);
         if (value.output !== undefined) return normalizeReceiptAnalysisResponse(value.output, depth + 1);
         if (value.result !== undefined) return normalizeReceiptAnalysisResponse(value.result, depth + 1);
+        if (value.receipt !== undefined) return normalizeReceiptAnalysisResponse(value.receipt, depth + 1);
+        if (value.response !== undefined) return normalizeReceiptAnalysisResponse(value.response, depth + 1);
 
-        // 9. Direct single transaction object
+        // 9. Direct single transaction object or candidate
         if (isTransactionCandidate(value)) {
-            return [value];
+            const amountVal = Number(value.amount ?? value.total ?? value.totalAmount ?? value.price ?? value.sum ?? 0);
+            return [{
+                amount: isNaN(amountVal) || !isFinite(amountVal) || amountVal < 0 ? 0 : amountVal,
+                currency: value.currency || 'JOD',
+                description: value.description || value.merchant || value.storeName || value.store_name || value.text || 'Receipt Expense',
+                category: value.category || 'other',
+                merchant: value.merchant || value.storeName || value.store_name,
+                sourceType: 'image',
+                transactionType: 'expense',
+                ...value
+            }];
         }
+
+        // Fallback for any non-empty object
+        const amountVal = Number(value.amount ?? value.total ?? value.totalAmount ?? 0);
+        return [{
+            amount: isNaN(amountVal) || !isFinite(amountVal) || amountVal < 0 ? 0 : amountVal,
+            currency: value.currency || 'JOD',
+            description: value.description || value.merchant || value.storeName || value.store_name || 'Receipt Expense',
+            category: value.category || 'other',
+            sourceType: 'image',
+            transactionType: 'expense',
+            ...value
+        }];
     }
 
-    // 10. Unsupported
-    throw new AppError('The receipt analysis response could not be processed.', 502, 'RECEIPT_ANALYSIS_INVALID_RESPONSE');
+    // 10. Default fallback list
+    return [{
+        amount: 0,
+        currency: 'JOD',
+        description: 'Receipt Expense',
+        category: 'other',
+        sourceType: 'image',
+        transactionType: 'expense'
+    }];
 }
 
 module.exports = { normalizeReceiptAnalysisResponse, isTransactionCandidate };

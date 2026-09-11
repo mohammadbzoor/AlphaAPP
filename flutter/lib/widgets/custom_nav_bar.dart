@@ -1,5 +1,6 @@
 import 'package:alpha_app/core/utils/app_colors.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -16,9 +17,11 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<Themeprovider>();
+    final themeProvider =
+        context.watch<Themeprovider>();
 
-    final isDark = themeProvider.isDark;
+    final isDark =
+        themeProvider.isDark;
 
     return SafeArea(
       top: false,
@@ -30,14 +33,22 @@ class CustomBottomNavigationBar extends StatelessWidget {
       ),
       child: Container(
         height: 72,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding:
+            const EdgeInsets.symmetric(
+          horizontal: 8,
+        ),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF10201F) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: isDark
+              ? const Color(0xFF10201F)
+              : Colors.white,
+          borderRadius:
+              BorderRadius.circular(24),
           border: Border.all(
             color: isDark
                 ? const Color(0xFF1D3532)
-                : Colors.black.withOpacity(0.06),
+                : Colors.black.withOpacity(
+                    0.06,
+                  ),
           ),
           boxShadow: [
             BoxShadow(
@@ -45,7 +56,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 isDark ? 0.20 : 0.08,
               ),
               blurRadius: 18,
-              offset: const Offset(0, 8),
+              offset:
+                  const Offset(0, 8),
             ),
           ],
         ),
@@ -53,46 +65,66 @@ class CustomBottomNavigationBar extends StatelessWidget {
           children: [
             Expanded(
               child: _NavigationItem(
-                icon: Icons.home_outlined,
-                selectedIcon: Icons.home,
-                label: "Home",
-                isSelected: currentIndex == 0,
+                icon:
+                    Icons.home_outlined,
+                selectedIcon:
+                    Icons.home,
+                label:
+                    'navigation.home'.tr(),
+                isSelected:
+                    currentIndex == 0,
                 isDark: isDark,
                 onTap: () => onTap(0),
               ),
             ),
             Expanded(
               child: _NavigationItem(
-                icon: Icons.receipt_long_outlined,
-                selectedIcon: Icons.receipt_long,
-                label: "Expenses",
-                isSelected: currentIndex == 1,
+                icon: Icons
+                    .receipt_long_outlined,
+                selectedIcon:
+                    Icons.receipt_long,
+                label:
+                    'navigation.expenses'
+                        .tr(),
+                isSelected:
+                    currentIndex == 1,
                 isDark: isDark,
                 onTap: () => onTap(1),
               ),
             ),
             Expanded(
-              child: _BasiraNavigationItem(
-                isSelected: currentIndex == 2,
+              child:
+                  _BasiraNavigationItem(
+                isSelected:
+                    currentIndex == 2,
                 onTap: () => onTap(2),
               ),
             ),
             Expanded(
               child: _NavigationItem(
-                icon: Icons.track_changes_outlined,
-                selectedIcon: Icons.track_changes,
-                label: "Goals",
-                isSelected: currentIndex == 3,
+                icon: Icons
+                    .track_changes_outlined,
+                selectedIcon:
+                    Icons.track_changes,
+                label:
+                    'navigation.goals'.tr(),
+                isSelected:
+                    currentIndex == 3,
                 isDark: isDark,
                 onTap: () => onTap(3),
               ),
             ),
             Expanded(
               child: _NavigationItem(
-                icon: Icons.person_outline,
-                selectedIcon: Icons.person,
-                label: "Profile",
-                isSelected: currentIndex == 4,
+                icon:
+                    Icons.person_outline,
+                selectedIcon:
+                    Icons.person,
+                label:
+                    'navigation.profile'
+                        .tr(),
+                isSelected:
+                    currentIndex == 4,
                 isDark: isDark,
                 onTap: () => onTap(4),
               ),
@@ -104,11 +136,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
   }
 }
 
-// =====================================================
-// NORMAL ITEM
-// =====================================================
-
-class _NavigationItem extends StatelessWidget {
+class _NavigationItem
+    extends StatelessWidget {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
@@ -127,34 +156,50 @@ class _NavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedColor =
-        isDark ? AppColors.darkSecondary : AppColors.lightSecondary;
+    final selectedColor = isDark
+        ? AppColors.darkSecondary
+        : AppColors.lightSecondary;
 
-    final unselectedColor =
-        isDark ? AppColors.darkSubText : AppColors.lightSubText;
+    final unselectedColor = isDark
+        ? AppColors.darkSubText
+        : AppColors.lightSubText;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius:
+          BorderRadius.circular(16),
       child: SizedBox(
         height: double.infinity,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.center,
           children: [
             Icon(
-              isSelected ? selectedIcon : icon,
+              isSelected
+                  ? selectedIcon
+                  : icon,
               size: 25,
-              color: isSelected ? selectedColor : unselectedColor,
+              color: isSelected
+                  ? selectedColor
+                  : unselectedColor,
             ),
-            const SizedBox(height: 5),
+            const SizedBox(
+              height: 5,
+            ),
             Text(
               label,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.ibmPlexSansArabic(
-                color: isSelected ? selectedColor : unselectedColor,
+              overflow:
+                  TextOverflow.ellipsis,
+              style: GoogleFonts
+                  .ibmPlexSansArabic(
+                color: isSelected
+                    ? selectedColor
+                    : unselectedColor,
                 fontSize: 10,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontWeight: isSelected
+                    ? FontWeight.bold
+                    : FontWeight.w500,
               ),
             ),
           ],
@@ -164,11 +209,8 @@ class _NavigationItem extends StatelessWidget {
   }
 }
 
-// =====================================================
-// BASIRA CENTER ITEM
-// =====================================================
-
-class _BasiraNavigationItem extends StatelessWidget {
+class _BasiraNavigationItem
+    extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -180,19 +222,26 @@ class _BasiraNavigationItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
-      offset: const Offset(0, -15),
+      offset:
+          const Offset(0, -15),
       child: InkWell(
         onTap: onTap,
-        customBorder: const CircleBorder(),
+        customBorder:
+            const CircleBorder(),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(
+            milliseconds: 250,
+          ),
           width: 58,
           height: 58,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            gradient:
+                const LinearGradient(
+              begin:
+                  Alignment.topLeft,
+              end:
+                  Alignment.bottomRight,
               colors: [
                 Color(0xFFF4C95D),
                 Color(0xFF7BE495),
@@ -200,25 +249,49 @@ class _BasiraNavigationItem extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF34D399).withOpacity(
-                  isSelected ? 0.45 : 0.25,
+                color:
+                    const Color(
+                  0xFF34D399,
+                ).withOpacity(
+                  isSelected
+                      ? 0.45
+                      : 0.25,
                 ),
-                blurRadius: isSelected ? 22 : 15,
-                spreadRadius: isSelected ? 2 : 0,
-                offset: const Offset(0, 7),
+                blurRadius:
+                    isSelected
+                        ? 22
+                        : 15,
+                spreadRadius:
+                    isSelected
+                        ? 2
+                        : 0,
+                offset:
+                    const Offset(
+                  0,
+                  7,
+                ),
               ),
             ],
             border: Border.all(
-              color: Colors.white.withOpacity(
-                isSelected ? 0.45 : 0.20,
+              color:
+                  Colors.white.withOpacity(
+                isSelected
+                    ? 0.45
+                    : 0.20,
               ),
             ),
           ),
           child: Center(
             child: Icon(
-              Icons.psychology_alt_outlined,
-              color: const Color(0xFF0B4A3E),
-              size: isSelected ? 38 : 35,
+              Icons
+                  .psychology_alt_outlined,
+              color:
+                  const Color(
+                0xFF0B4A3E,
+              ),
+              size: isSelected
+                  ? 38
+                  : 35,
             ),
           ),
         ),

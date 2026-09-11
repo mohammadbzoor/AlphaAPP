@@ -14,20 +14,16 @@ class SavingsAccountingService {
     );
 
     if (rows.length === 0) {
-      return {
-        plannedSavings: 0,
-        emergencyFundPercentage: 10,
-        plannedEmergencyFund: 0,
-        plannedGoalAllocations: 0,
-        unallocatedSavings: 0
-      };
-    }
+      const [snapRows] = await db.execute(
+        `SELECT cas.savings_target 
+         FROM cycle_allocation_snapshots cas
+         JOIN financial_cycles fc ON fc.id = cas.cycle_id
+         WHERE cas.cycle_id = ? AND fc.user_id = ? LIMIT 1`,
+        [cycleId, userId]
+      );
+      const plannedSavings = snapRows.length > 0 ? Number(snapRows[0].savings_target || 0) : 0;
+      const plannedEmergencyFund = Math.round(plannedSavings * 0.10);
 
-    const plan = rows[0];
-    let plannedGoalAllocations = Number(plan.total_goal_allocations || 0);
-    let unallocatedSavings = Number(plan.unallocated_savings_amount || 0);
-
-    if (plannedGoalAllocations === 0) {
       const [goalsRows] = await db.execute(
         `SELECT COALESCE(SUM(planned_contribution), 0) AS total 
          FROM goals 
@@ -35,17 +31,48 @@ class SavingsAccountingService {
         [userId]
       );
       const goalsTotal = Number(goalsRows[0].total);
-      if (goalsTotal > 0 && unallocatedSavings > 0) {
-        const effectiveAllocation = Math.min(goalsTotal, unallocatedSavings);
-        plannedGoalAllocations = effectiveAllocation;
-        unallocatedSavings -= effectiveAllocation;
+      const plannedGoalAllocations = Math.min(goalsTotal, Math.max(0, plannedSavings - plannedEmergencyFund));
+      const unallocatedSavings = Math.max(0, plannedSavings - plannedEmergencyFund - plannedGoalAllocations);
+
+      return {
+        plannedSavings,
+        emergencyFundPercentage: 10,
+        plannedEmergencyFund,
+        plannedGoalAllocations,
+        unallocatedSavings
+      };
+    }
+
+    const plan = rows[0];
+    const plannedSavings = Number(plan.savings_amount || 0);
+    const emergencyFundPercentage = Number(plan.emergency_fund_rate ?? 10);
+    let plannedEmergencyFund = Number(plan.emergency_fund_amount || 0);
+    let plannedGoalAllocations = Number(plan.total_goal_allocations || 0);
+
+    if (plannedEmergencyFund === 0 && plannedSavings > 0 && emergencyFundPercentage > 0) {
+      plannedEmergencyFund = Math.round(plannedSavings * (emergencyFundPercentage / 100));
+    }
+
+    if (plannedGoalAllocations === 0 && plannedSavings > 0) {
+      const [goalsRows] = await db.execute(
+        `SELECT COALESCE(SUM(planned_contribution), 0) AS total 
+         FROM goals 
+         WHERE user_id = ? AND status = 'active' AND is_system_managed = FALSE AND goal_type != 'emergency_fund'`,
+        [userId]
+      );
+      const goalsTotal = Number(goalsRows[0].total);
+      const availableForGoals = Math.max(0, plannedSavings - plannedEmergencyFund);
+      if (goalsTotal > 0 && availableForGoals > 0) {
+        plannedGoalAllocations = Math.min(goalsTotal, availableForGoals);
       }
     }
 
+    const unallocatedSavings = Math.max(0, plannedSavings - plannedEmergencyFund - plannedGoalAllocations);
+
     return {
-      plannedSavings: Number(plan.savings_amount || 0),
-      emergencyFundPercentage: Number(plan.emergency_fund_rate ?? 10),
-      plannedEmergencyFund: Number(plan.emergency_fund_amount || 0),
+      plannedSavings,
+      emergencyFundPercentage,
+      plannedEmergencyFund,
       plannedGoalAllocations,
       unallocatedSavings
     };

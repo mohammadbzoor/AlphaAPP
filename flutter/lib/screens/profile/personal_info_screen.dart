@@ -3,6 +3,7 @@ import 'package:alpha_app/core/utils/device.dart';
 import 'package:alpha_app/providers/profile_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
 import 'package:alpha_app/widgets/option_chip.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -21,28 +22,40 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   String? _gender;
   DateTime? _birthDate;
-
   bool _isInit = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isInit) {
-      final profileProvider = context.read<ProfileProvider>();
-      profileProvider.loadFullProfile().then((_) {
-        if (mounted) {
-          final profile = profileProvider.profile;
-          setState(() {
-            _nameController.text = profile?.name ?? '';
-            _emailController.text = profile?.email ?? '';
-            _phoneController.text = profile?.phone ?? '';
-            _gender = profile?.gender;
-            _birthDate = profile?.birthDate;
-          });
-        }
-      });
-      _isInit = true;
-    }
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProfile();
+    });
+  }
+
+  Future<void> _loadProfile() async {
+    if (!mounted || _isInit) return;
+
+    _isInit = true;
+
+    final profileProvider = context.read<ProfileProvider>();
+    await profileProvider.loadFullProfile();
+
+    if (!mounted) return;
+
+    final profile = profileProvider.profile;
+
+    setState(() {
+      _nameController.text = profile?.name ?? '';
+      _emailController.text = profile?.email ?? '';
+      _phoneController.text = profile?.phone ?? '';
+      _gender = profile?.gender?.toLowerCase();
+      _birthDate = profile?.birthDate;
+    });
+  }
+
+  Future<void> _retryLoadProfile() async {
+    _isInit = false;
+    await _loadProfile();
   }
 
   @override
@@ -55,6 +68,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   Future<void> _saveProfile() async {
     final profileProvider = context.read<ProfileProvider>();
+
     final success = await profileProvider.updateProfile(
       name: _nameController.text.trim(),
       email: _emailController.text.trim(),
@@ -63,12 +77,17 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       birthDate: _birthDate,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (success) {
       Navigator.pop(context, true);
-    } else if (mounted) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(profileProvider.errorMessage ?? 'Update failed'),
+          content: Text(
+            profileProvider.errorMessage ??
+                'common.something_went_wrong'.tr(),
+          ),
           backgroundColor: AppColors.darkError,
         ),
       );
@@ -78,10 +97,18 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   @override
   Widget build(BuildContext context) {
     final profileProvider = context.watch<ProfileProvider>();
-    final themeprovider = Provider.of<Themeprovider>(context);
+    final themeProvider = context.watch<Themeprovider>();
     final screenW = Device.width(context);
     final screenH = Device.height(context);
-    final isDark = themeprovider.isDark;
+    final isDark = themeProvider.isDark;
+
+    final femaleLabel = 'personal_info.female'.tr();
+    final maleLabel = 'personal_info.male'.tr();
+
+    String selectedGenderLabel = femaleLabel;
+    if (_gender == 'male') {
+      selectedGenderLabel = maleLabel;
+    }
 
     return Scaffold(
       backgroundColor:
@@ -93,7 +120,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           color: isDark ? AppColors.darkText : AppColors.lightText,
         ),
         title: Text(
-          'Edit Profile',
+          'profile.edit_profile'.tr(),
           style: GoogleFonts.ibmPlexSansArabic(
             color: isDark ? AppColors.darkText : AppColors.lightText,
             fontWeight: FontWeight.bold,
@@ -114,11 +141,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline,
-                            size: 48, color: AppColors.darkError),
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: AppColors.darkError,
+                        ),
                         const SizedBox(height: 16),
                         Text(
-                          'Could not load profile',
+                          'common.something_went_wrong'.tr(),
                           style: GoogleFonts.ibmPlexSansArabic(
                             color: isDark
                                 ? AppColors.darkText
@@ -129,24 +159,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         ),
                         const SizedBox(height: 12),
                         TextButton.icon(
-                          onPressed: () {
-                            final provider = context.read<ProfileProvider>();
-                            provider.loadFullProfile().then((_) {
-                              if (mounted) {
-                                final profile = provider.profile;
-                                setState(() {
-                                  _nameController.text = profile?.name ?? '';
-                                  _emailController.text = profile?.email ?? '';
-                                  _phoneController.text = profile?.phone ?? '';
-                                  _gender = profile?.gender;
-                                  _birthDate = profile?.birthDate;
-                                });
-                              }
-                            });
-                          },
+                          onPressed: _retryLoadProfile,
                           icon: const Icon(Icons.refresh),
                           label: Text(
-                            'Retry',
+                            'common.try_again'.tr(),
                             style: GoogleFonts.ibmPlexSansArabic(
                               color: isDark
                                   ? AppColors.darkPrimary
@@ -158,13 +174,15 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     ),
                   )
                 : SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: screenW * 0.05),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenW * 0.05,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: screenH * 0.03),
                         Text(
-                          "Full Name",
+                          'profile.full_name'.tr(),
                           style: TextStyle(
                             fontSize: screenW * 0.04,
                             color: isDark
@@ -177,22 +195,24 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         TextField(
                           controller: _nameController,
                           style: TextStyle(
-                              color: isDark
-                                  ? AppColors.darkText
-                                  : AppColors.lightText),
+                            color: isDark
+                                ? AppColors.darkText
+                                : AppColors.lightText,
+                          ),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: isDark
                                 ? AppColors.darkBorder
                                 : Colors.grey[200],
                             border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none),
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                         SizedBox(height: screenH * 0.02),
                         Text(
-                          "Email",
+                          'profile.email'.tr(),
                           style: TextStyle(
                             fontSize: screenW * 0.04,
                             color: isDark
@@ -204,23 +224,26 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         SizedBox(height: screenH * 0.01),
                         TextField(
                           controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
                           style: TextStyle(
-                              color: isDark
-                                  ? AppColors.darkText
-                                  : AppColors.lightText),
+                            color: isDark
+                                ? AppColors.darkText
+                                : AppColors.lightText,
+                          ),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: isDark
                                 ? AppColors.darkBorder
                                 : Colors.grey[200],
                             border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none),
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                         SizedBox(height: screenH * 0.02),
                         Text(
-                          "Phone",
+                          'profile.phone'.tr(),
                           style: TextStyle(
                             fontSize: screenW * 0.04,
                             color: isDark
@@ -232,23 +255,26 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         SizedBox(height: screenH * 0.01),
                         TextField(
                           controller: _phoneController,
+                          keyboardType: TextInputType.phone,
                           style: TextStyle(
-                              color: isDark
-                                  ? AppColors.darkText
-                                  : AppColors.lightText),
+                            color: isDark
+                                ? AppColors.darkText
+                                : AppColors.lightText,
+                          ),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: isDark
                                 ? AppColors.darkBorder
                                 : Colors.grey[200],
                             border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none),
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                         SizedBox(height: screenH * 0.02),
                         Text(
-                          "Gender",
+                          'personal_info.gender'.tr(),
                           style: TextStyle(
                             fontSize: screenW * 0.04,
                             color: isDark
@@ -259,9 +285,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         ),
                         SizedBox(height: screenH * 0.01),
                         OptionChip(
-                          items: const ["Female", "Male"],
-                          selected: _gender,
-                          onTap: (val) => setState(() => _gender = val),
+                          items: [femaleLabel, maleLabel],
+                          selected: selectedGenderLabel,
+                          onTap: (value) {
+                            setState(() {
+                              _gender =
+                                  value == femaleLabel ? 'female' : 'male';
+                            });
+                          },
                         ),
                         SizedBox(height: screenH * 0.05),
                         SizedBox(
@@ -280,9 +311,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                             ),
                             child: profileProvider.isSaving
                                 ? const CircularProgressIndicator(
-                                    color: Colors.white)
+                                    color: Colors.white,
+                                  )
                                 : Text(
-                                    "Save Changes",
+                                    'common.save_changes'.tr(),
                                     style: TextStyle(
                                       fontSize: screenW * 0.055,
                                       color: AppColors.darkBorder,

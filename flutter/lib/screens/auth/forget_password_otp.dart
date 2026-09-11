@@ -3,6 +3,7 @@ import 'package:alpha_app/providers/auth_provider.dart';
 import 'package:alpha_app/providers/themeprovider.dart';
 import 'package:alpha_app/screens/auth/reset_password_screen.dart';
 import 'package:alpha_app/widgets/app_button.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
@@ -11,136 +12,306 @@ import 'package:provider/provider.dart';
 class ForgetPasswordOtpScreen extends StatelessWidget {
   final String email;
 
-  const ForgetPasswordOtpScreen({super.key, required this.email});
+  const ForgetPasswordOtpScreen({
+    super.key,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
     final screenH = MediaQuery.of(context).size.height;
-    final themeprovider = Provider.of<Themeprovider>(context);
-    final isDark = themeprovider.isDark;
-    final authProvider = Provider.of<AuthProvider>(context);
+
+    final themeProvider = context.watch<Themeprovider>();
+    final authProvider = context.watch<AuthProvider>();
+
+    final isDark = themeProvider.isDark;
+
+    final backgroundColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+
+    final textColor = isDark
+        ? AppColors.darkText
+        : AppColors.lightText;
+
+    final subTextColor = isDark
+        ? AppColors.darkSubText
+        : AppColors.lightSubText;
+
+    final primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.lightPrimary;
+
+    final cardColor = isDark
+        ? AppColors.darkCard
+        : AppColors.lightCard;
+
+    final borderColor = isDark
+        ? AppColors.darkBorder
+        : AppColors.lightBorder;
+
+    final errorColor = isDark
+        ? AppColors.darkError
+        : AppColors.lightError;
 
     final defaultPinTheme = PinTheme(
-      width: 56,
-      height: 56,
+      width: 52,
+      height: 60,
       textStyle: GoogleFonts.ibmPlexSansArabic(
-        fontSize: 20,
-        color: isDark ? AppColors.darkText : AppColors.lightText,
-        fontWeight: FontWeight.w600,
+        fontSize: 22,
+        color: textColor,
+        fontWeight: FontWeight.bold,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-        borderRadius: BorderRadius.circular(16),
+          color: borderColor,
+        ),
       ),
     );
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDark ? AppColors.darkText : AppColors.lightText),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      resizeToAvoidBottomInset: true,
+      backgroundColor: backgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          keyboardDismissBehavior:
+              ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            screenW * 0.06,
+            screenH * 0.025,
+            screenW * 0.06,
+            MediaQuery.of(context).viewInsets.bottom +
+                screenH * 0.035,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: screenH * 0.05),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: InkWell(
+                  onTap: authProvider.isLoading
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                        },
+                  borderRadius: BorderRadius.circular(13),
+                  child: Container(
+                    width: screenW * 0.12,
+                    height: screenW * 0.12,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: primaryColor,
+                      size: screenW * 0.07,
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(
+                height: screenH * 0.035,
+              ),
+
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.mark_email_read_outlined,
+                  size: 48,
+                  color: primaryColor,
+                ),
+              ),
+
+              SizedBox(
+                height: screenH * 0.035,
+              ),
+
               Text(
-                'Verify Code',
+                'forgot_password_otp.title'.tr(),
+                textAlign: TextAlign.center,
                 style: GoogleFonts.ibmPlexSansArabic(
-                  color: isDark ? AppColors.darkText : AppColors.lightText,
-                  fontSize: 28,
+                  color: textColor,
+                  fontSize: screenW * 0.07,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
+
+              SizedBox(
+                height: screenH * 0.012,
+              ),
+
               Text(
-                'Please enter the 6-digit code sent to $email',
+                'forgot_password_otp.description'.tr(
+  namedArgs: {
+    'email': email,
+  },
+),
+                textAlign: TextAlign.center,
                 style: GoogleFonts.ibmPlexSansArabic(
-                  color:
-                      isDark ? AppColors.darkSubText : AppColors.lightSubText,
-                  fontSize: 16,
+                  color: subTextColor,
+                  fontSize: screenW * 0.04,
+                  height: 1.5,
                 ),
               ),
-              SizedBox(height: screenH * 0.05),
-              Center(
+
+              SizedBox(
+                height: screenH * 0.04,
+              ),
+
+              Directionality(
+                textDirection: Directionality.of(context),
                 child: Pinput(
                   length: 6,
+
+                  // نفس Controller الخاص بالباك.
                   controller: authProvider.otpController,
+
+                  enabled: !authProvider.isLoading,
                   defaultPinTheme: defaultPinTheme,
-                  focusedPinTheme: defaultPinTheme.copyDecorationWith(
+                  focusedPinTheme:
+                      defaultPinTheme.copyDecorationWith(
                     border: Border.all(
-                        color: isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.lightPrimary,
-                        width: 2),
+                      color: primaryColor,
+                      width: 2,
+                    ),
                   ),
                   submittedPinTheme: defaultPinTheme,
+                  errorPinTheme:
+                      defaultPinTheme.copyDecorationWith(
+                    border: Border.all(
+                      color: errorColor,
+                      width: 2,
+                    ),
+                  ),
                   showCursor: true,
+
                   onCompleted: (pin) async {
-                    if (authProvider.isLoading) return;
-                    final success = await authProvider.verifyPasswordResetOtp(
+                    if (authProvider.isLoading) {
+                      return;
+                    }
+
+                    // نفس استدعاء الباك الأصلي.
+                    final success =
+                        await authProvider
+                            .verifyPasswordResetOtp(
                       otpCode: pin,
                     );
+
                     if (success && context.mounted) {
+                      // نفس الانتقال الأصلي.
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              ResetPasswordScreen(email: email, otpCode: pin),
+                          builder: (_) =>
+                              ResetPasswordScreen(
+                            email: email,
+                            otpCode: pin,
+                          ),
                         ),
                       );
                     }
                   },
                 ),
               ),
+
               if (authProvider.errorMessage != null) ...[
-                const SizedBox(height: 20),
-                Center(
-                  child: Text(
-                    authProvider.errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+                SizedBox(
+                  height: screenH * 0.025,
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: errorColor.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: errorColor.withOpacity(0.30),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 20,
+                        color: errorColor,
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Expanded(
+                        child: Text(
+                          authProvider.errorMessage!,
+                          textAlign: TextAlign.start,
+                          style:
+                              GoogleFonts.ibmPlexSansArabic(
+                            fontSize: 13,
+                            color: errorColor,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-              SizedBox(height: screenH * 0.05),
+
               SizedBox(
+                height: screenH * 0.05,
+              ),
+
+              AppButton(
+               text: 'forgot_password_otp.verify'.tr(),
+                isDark: isDark,
+                isLoading: authProvider.isLoading,
                 width: double.infinity,
-                child: AppButton(
-                  text: 'Verify',
-                  isDark: isDark,
-                  onPressed: authProvider.isLoading
-                      ? () {}
-                      : () async {
-                          final success =
-                              await authProvider.verifyPasswordResetOtp(
-                            otpCode: authProvider.otpController.text,
-                          );
-                          if (success && context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ResetPasswordScreen(
-                                  email: email,
-                                  otpCode: authProvider.otpController.text,
-                                ),
+                height: 56,
+                onPressed: authProvider.isLoading
+                    ? () {}
+                    : () async {
+                        // نفس قيمة الرمز الموجودة
+                        // في Controller الخاص بالباك.
+                        final otpCode =
+                            authProvider.otpController.text;
+
+                        // نفس استدعاء الباك الأصلي.
+                        final success =
+                            await authProvider
+                                .verifyPasswordResetOtp(
+                          otpCode: otpCode,
+                        );
+
+                        if (success &&
+                            context.mounted) {
+                          // نفس الانتقال الأصلي.
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ResetPasswordScreen(
+                                email: email,
+                                otpCode: otpCode,
                               ),
-                            );
-                          }
-                        },
-                  isLoading: authProvider.isLoading,
-                ),
+                            ),
+                          );
+                        }
+                      },
+              ),
+
+              SizedBox(
+                height: screenH * 0.035,
               ),
             ],
           ),

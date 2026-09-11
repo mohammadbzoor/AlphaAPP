@@ -130,8 +130,17 @@ class GoalProvider extends ChangeNotifier {
 
         if (items is List) {
           final loadedGoals = items
+              .where((item) {
+                final map = Map<String, dynamic>.from(item as Map);
+                final isSystem = map['isSystemManaged'] == true ||
+                    map['is_system_managed'] == true ||
+                    map['is_system_managed'] == 1 ||
+                    map['goalType'] == 'emergency_fund' ||
+                    map['goal_type'] == 'emergency_fund';
+                return !isSystem;
+              })
               .map((item) {
-                final map = Map<String, dynamic>.from(item);
+                final map = Map<String, dynamic>.from(item as Map);
 
                 // Map backend fields to what Goal.fromJson expects
                 return Goal(

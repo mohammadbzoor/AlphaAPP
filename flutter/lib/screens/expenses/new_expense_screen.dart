@@ -15,6 +15,7 @@ import 'package:alpha_app/core/utils/dashboard_action_result.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class NewExpenseScreen extends StatefulWidget {
   final ExpenseModel? expenseToEdit;
@@ -107,8 +108,9 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     Text(
                       _isEditing
-                          ? "Update the expense details below."
-                          : "Record the expense accurately so Alpha can analyze its effect on your budget.",
+                        
+    ? 'new_expense.update_description'.tr()
+    : 'new_expense.description'.tr(),
                       style: GoogleFonts.ibmPlexSansArabic(
                         color: isDark
                             ? AppColors.darkSubText
@@ -125,7 +127,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     if (!_isEditing) ...[
                       _SectionTitle(
-                        title: "Input Method",
+                        title: 'new_expense.input_method'.tr(),
                         screenW: screenW,
                         isDark: isDark,
                       ),
@@ -135,7 +137,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                           Expanded(
                             child: _InputOptionCard(
                               icon: Icons.edit_note,
-                              title: "Manual",
+                              title: 'manual'.tr(),
                               isSelected: true,
                               isDark: isDark,
                               onTap: () {}, // Already here
@@ -145,7 +147,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                           Expanded(
                             child: _InputOptionCard(
                               icon: Icons.document_scanner_outlined,
-                              title: "Receipt",
+                              title: 'new_expense.options.receipt'.tr(),
                               isSelected: false,
                               isDark: isDark,
                               onTap: () async {
@@ -165,7 +167,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                           Expanded(
                             child: _InputOptionCard(
                               icon: Icons.mic_none,
-                              title: "Voice",
+                              title: 'new_expense.options.voice'.tr(),
                               isSelected: false,
                               isDark: isDark,
                               onTap: () async {
@@ -189,7 +191,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     // ================= MOVEMENT TYPE =================
 
                     _SectionTitle(
-                      title: "Movement type",
+                      title: 'new_expense.movement_type'.tr(),
                       screenW: screenW,
                       isDark: isDark,
                     ),
@@ -199,9 +201,22 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     ),
 
                     OptionChip(
-                      items: provider.movementTypes,
-                      selected: provider.movementTypeLabel,
-                      onTap: provider.setMovementTypeByLabel,
+                      items: provider.movementTypes
+                          .map(_translateExpenseOption)
+                          .toList(),
+                      selected: provider.movementTypeLabel == null
+                          ? null
+                          : _translateExpenseOption(
+                              provider.movementTypeLabel!,
+                            ),
+                      onTap: (value) {
+                        provider.setMovementTypeByLabel(
+                          _originalExpenseOption(
+                            value,
+                            provider.movementTypes,
+                          ),
+                        );
+                      },
                     ),
 
                     SizedBox(
@@ -211,7 +226,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     // ================= NEED / WANT =================
 
                     _SectionTitle(
-                      title: "Expense type",
+                      title: 'new_expense.expense_type'.tr(),
                       screenW: screenW,
                       isDark: isDark,
                     ),
@@ -221,18 +236,20 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     ),
 
                     OptionChip(
-                      items: const [
-                        "Need",
-                        "Want",
+                      items: [
+                        'new_expense.options.need'.tr(),
+                        'new_expense.options.want'.tr(),
                       ],
                       selected: provider.expenseType == ExpenseType.need
-                          ? "Need"
+                          ? 'new_expense.options.need'.tr()
                           : (provider.expenseType == ExpenseType.want
-                              ? "Want"
+                              ? 'new_expense.options.want'.tr()
                               : null),
                       onTap: (value) {
                         provider.setExpenseType(
-                          value == "Need" ? ExpenseType.need : ExpenseType.want,
+                          value == 'new_expense.options.need'.tr()
+                              ? ExpenseType.need
+                              : ExpenseType.want,
                         );
                       },
                     ),
@@ -244,7 +261,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     // ================= CATEGORY =================
 
                     _SectionTitle(
-                      title: "Category",
+                      title: 'new_expense.category'.tr(),
                       screenW: screenW,
                       isDark: isDark,
                     ),
@@ -255,7 +272,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     if (provider.expenseType == null)
                       Text(
-                        "Select an expense type to view categories.",
+                        'select_expense_type_first'.tr(),
                         style: GoogleFonts.ibmPlexSansArabic(
                           color: isDark
                               ? AppColors.darkSubText
@@ -265,13 +282,24 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                       )
                     else
                       MultiSelectChip(
-                        items: provider.categories,
+                        items: provider.categories
+                            .map(_translateExpenseOption)
+                            .toList(),
                         selectedItems: provider.selectedCategory == null
                             ? []
                             : [
-                                provider.selectedCategory!,
+                                _translateExpenseOption(
+                                  provider.selectedCategory!,
+                                ),
                               ],
-                        onTap: provider.setCategory,
+                        onTap: (value) {
+                          provider.setCategory(
+                            _originalExpenseOption(
+                              value,
+                              provider.categories,
+                            ),
+                          );
+                        },
                       ),
 
                     if (provider.selectedCategory == "Other") ...[
@@ -280,7 +308,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                       ),
                       CustomTextfield(
                         controller: provider.customCategoryController,
-                        hint: "Enter category name",
+                        hint: 'new_expense.enter_category_name'.tr(),
                         type: TextFieldType.name,
                         icon: Icons.category_outlined,
                         onChanged: (_) {
@@ -296,7 +324,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     // ================= EXPENSE NAME =================
 
                     _SectionTitle(
-                      title: "Expense name",
+                      title: 'new_expense.expense_name'.tr(),
                       screenW: screenW,
                       isDark: isDark,
                     ),
@@ -307,7 +335,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     CustomTextfield(
                       controller: provider.titleController,
-                      hint: "Enter expense name",
+                      hint: 'new_expense.enter_expense_name'.tr(),
                       type: TextFieldType.name,
                       icon: Icons.receipt_long_outlined,
                       onChanged: (_) {
@@ -322,7 +350,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     // ================= AMOUNT =================
 
                     _SectionTitle(
-                      title: "Amount",
+                      title: 'new_expense.amount'.tr(),
                       screenW: screenW,
                       isDark: isDark,
                     ),
@@ -333,12 +361,12 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     CustomTextfield(
                       controller: provider.amountController,
-                      hint: "Enter amount",
+                      hint: 'new_expense.enter_amount'.tr(),
                       type: TextFieldType.number,
                       icon: Icons.payments_outlined,
-                      suffix: const Padding(
+                      suffix:  Padding(
                         padding: EdgeInsets.all(12),
-                        child: Text("JOD"),
+                        child: Text('common.jod'.tr()),
                       ),
                       onChanged: (_) {
                         provider.notifyExpenseFormChanged();
@@ -353,7 +381,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     if (provider.isRecurring) ...[
                       _SectionTitle(
-                        title: "Coverage period",
+                        title: 'new_expense.coverage_period'.tr(),
                         screenW: screenW,
                         isDark: isDark,
                       ),
@@ -361,19 +389,30 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                         height: screenH * 0.012,
                       ),
                       MultiSelectChip(
-                        items: provider.coveragePeriods,
+                        items: provider.coveragePeriods
+                            .map(_translateExpenseOption)
+                            .toList(),
                         selectedItems: provider.coveragePeriodLabel == null
                             ? []
                             : [
-                                provider.coveragePeriodLabel!,
+                                _translateExpenseOption(
+                                  provider.coveragePeriodLabel!,
+                                ),
                               ],
-                        onTap: provider.setCoveragePeriodByLabel,
+                        onTap: (value) {
+                          provider.setCoveragePeriodByLabel(
+                            _originalExpenseOption(
+                              value,
+                              provider.coveragePeriods,
+                            ),
+                          );
+                        },
                       ),
                       SizedBox(
                         height: screenH * 0.022,
                       ),
                       _SectionTitle(
-                        title: "Flexibility",
+                        title: 'flexibility'.tr(),
                         screenW: screenW,
                         isDark: isDark,
                       ),
@@ -381,9 +420,22 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                         height: screenH * 0.012,
                       ),
                       OptionChip(
-                        items: provider.flexibilities,
-                        selected: provider.flexibility,
-                        onTap: provider.setFlexibility,
+                        items: provider.flexibilities
+                            .map(_translateExpenseOption)
+                            .toList(),
+                        selected: provider.flexibility == null
+                            ? null
+                            : _translateExpenseOption(
+                                provider.flexibility!,
+                              ),
+                        onTap: (value) {
+                          provider.setFlexibility(
+                            _originalExpenseOption(
+                              value,
+                              provider.flexibilities,
+                            ),
+                          );
+                        },
                       ),
                       SizedBox(
                         height: screenH * 0.022,
@@ -391,7 +443,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     ] else ...[
                       // ================= PAYMENT METHOD =================
                       _SectionTitle(
-                        title: "Payment method",
+                        title: 'new_expense.payment_method'.tr(),
                         screenW: screenW,
                         isDark: isDark,
                       ),
@@ -399,9 +451,22 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                         height: screenH * 0.012,
                       ),
                       OptionChip(
-                        items: provider.paymentMethods,
-                        selected: provider.paymentMethod,
-                        onTap: provider.setPaymentMethod,
+                        items: provider.paymentMethods
+                            .map(_translateExpenseOption)
+                            .toList(),
+                        selected: provider.paymentMethod == null
+                            ? null
+                            : _translateExpenseOption(
+                                provider.paymentMethod!,
+                              ),
+                        onTap: (value) {
+                          provider.setPaymentMethod(
+                            _originalExpenseOption(
+                              value,
+                              provider.paymentMethods,
+                            ),
+                          );
+                        },
                       ),
                       SizedBox(
                         height: screenH * 0.022,
@@ -412,8 +477,8 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     _SectionTitle(
                       title: provider.isRecurring
-                          ? "Next Due Date"
-                          : "Transaction Date",
+                          ? 'next_due_date'.tr()
+                          : 'transaction_date'.tr(),
                       screenW: screenW,
                       isDark: isDark,
                     ),
@@ -425,8 +490,8 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     CustomTextfield(
                       controller: provider.dateController,
                       hint: provider.isRecurring
-                          ? "Select due date"
-                          : "Select transaction date",
+                          ? 'select_due_date'.tr()
+                          : 'select_transaction_date'.tr(),
                       type: TextFieldType.date,
                       icon: Icons.calendar_month_outlined,
                       readOnly: true,
@@ -458,7 +523,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     // ================= NOTE =================
 
                     _SectionTitle(
-                      title: "Note (optional)",
+                      title: 'new_expense.note_optional'.tr(),
                       screenW: screenW,
                       isDark: isDark,
                     ),
@@ -469,7 +534,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     CustomTextfield(
                       controller: provider.noteController,
-                      hint: "Add a note",
+                      hint: 'new_expense.add_note'.tr(),
                       type: TextFieldType.name,
                       icon: Icons.notes_rounded,
                       onChanged: (_) {
@@ -503,10 +568,10 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
 
                     AppButton(
                       text: _isEditing
-                          ? "Save Changes"
+                          ? 'common.save_changes'.tr()
                           : provider.isShoppingSessionActive
-                              ? "Add to Session"
-                              : "Add Expense",
+                              ? 'new_expense.add_to_session'.tr()
+                              : 'new_expense.add_expense'.tr(),
                       isDark: isDark,
                       isLoading: provider.isSaving,
                       width: double.infinity,
@@ -522,7 +587,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                             ..showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "Please complete all required fields",
+                                  'common.complete_required_fields'.tr(),
                                   style: GoogleFonts.ibmPlexSansArabic(
                                     fontSize: screenW * 0.04,
                                     fontWeight: FontWeight.w500,
@@ -562,7 +627,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                             ..showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "Could not save expense",
+                                  'new_expense.could_not_save'.tr(),
                                   style: GoogleFonts.ibmPlexSansArabic(
                                     fontSize: screenW * 0.04,
                                     fontWeight: FontWeight.w500,
@@ -584,10 +649,10 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                             SnackBar(
                               content: Text(
                                 wasEditing
-                                    ? "Expense updated successfully"
+                                    ? 'new_expense.updated_successfully'.tr()
                                     : addedToSession
-                                        ? "Expense added to shopping session"
-                                        : "Expense added successfully",
+                                        ? 'new_expense.added_to_session'.tr()
+                                        : 'new_expense.added_successfully'.tr(),
                                 style: GoogleFonts.ibmPlexSansArabic(
                                   fontSize: screenW * 0.04,
                                   fontWeight: FontWeight.w500,
@@ -661,7 +726,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
         ),
         Expanded(
           child: Text(
-            _isEditing ? "Edit Expense" : "Add Expense",
+            _isEditing ? "Edit Expense" : 'new_expense.add_expense'.tr(),
             style: GoogleFonts.ibmPlexSansArabic(
               color: isDark ? AppColors.darkText : AppColors.lightText,
               fontSize: screenW * 0.065,
@@ -733,7 +798,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      "No Active Financial Cycle",
+                      'new_expense.no_active_cycle'.tr(),
                       style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: screenW * 0.05,
                         fontWeight: FontWeight.bold,
@@ -744,7 +809,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     ),
                     SizedBox(height: screenH * 0.015),
                     Text(
-                      "Start a financial cycle before adding transactions.",
+                      'start_financial_cycle_first'.tr(),
                       style: GoogleFonts.ibmPlexSansArabic(
                         fontSize: screenW * 0.04,
                         fontWeight: FontWeight.w500,
@@ -756,7 +821,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     ),
                     SizedBox(height: screenH * 0.03),
                     AppButton(
-                      text: "Start Financial Cycle",
+                      text: 'new_expense.start_financial_cycle'.tr(),
                       isDark: isDark,
                       onPressed: () {
                         Navigator.pop(ctx);
@@ -771,7 +836,7 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                     ),
                     SizedBox(height: screenH * 0.015),
                     AppButton(
-                      text: "Cancel",
+                      text: 'common.cancel'.tr(),
                       isDark: isDark,
                       onPressed: () {
                         Navigator.pop(ctx);
@@ -784,6 +849,83 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
           });
         });
   }
+}
+
+
+String _normalizeExpenseOption(
+  String value,
+) {
+  return value
+      .trim()
+      .toLowerCase()
+      .replaceAll('&', 'and')
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+}
+
+String _translateExpenseOption(
+  String value,
+) {
+  final String normalized = _normalizeExpenseOption(value);
+
+  const Map<String, String> keys = {
+    'manual': 'manual',
+    'receipt': 'new_expense.options.receipt',
+    'voice': 'new_expense.options.voice',
+    'occasional': 'new_expense.options.occasional',
+    'recurring': 'new_expense.options.recurring',
+    'need': 'new_expense.options.need',
+    'want': 'new_expense.options.want',
+    'food': 'new_expense.options.food',
+    'shopping': 'new_expense.options.shopping',
+    'transport': 'new_expense.options.transport',
+    'bills': 'new_expense.options.bills',
+    'health': 'new_expense.options.health',
+    'education': 'new_expense.options.education',
+    'entertainment': 'new_expense.options.entertainment',
+    'travel': 'new_expense.options.travel',
+    'investment': 'new_expense.options.investment',
+    'other': 'new_expense.options.other',
+    'cash': 'new_expense.options.cash',
+    'card': 'new_expense.options.card',
+    'wallet': 'new_expense.options.wallet',
+    'one_day': 'new_expense.options.one_day',
+    'three_days': 'new_expense.options.three_days',
+    'one_week': 'new_expense.options.one_week',
+    'two_weeks': 'new_expense.options.two_weeks',
+    'weekly': 'weekly',
+    'monthly': 'monthly',
+    'quarterly': 'quarterly',
+    'yearly': 'yearly',
+    'fixed': 'fixed',
+    'flexible': 'flexible',
+  };
+
+  final String? key = keys[normalized];
+
+  if (key == null) {
+    return value;
+  }
+
+  try {
+    final String translated = key.tr();
+    return translated == key ? value : translated;
+  } catch (_) {
+    return value;
+  }
+}
+
+String _originalExpenseOption(
+  String displayedValue,
+  List<String> originalValues,
+) {
+  for (final String originalValue in originalValues) {
+    if (_translateExpenseOption(originalValue) == displayedValue) {
+      return originalValue;
+    }
+  }
+
+  return displayedValue;
 }
 
 // =====================================================

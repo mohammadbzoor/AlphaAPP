@@ -307,6 +307,21 @@ class TransactionDraft {
   });
 
   factory TransactionDraft.fromJson(Map<String, dynamic> json) {
+    String? extractString(dynamic val) {
+      if (val == null) return null;
+      if (val is String) return val.isEmpty ? null : val;
+      if (val is Map) {
+        for (var k in ['name', 'text', 'label', 'description', 'title', 'value', 'category']) {
+          if (val.containsKey(k) && val[k] != null) {
+            final res = val[k].toString().trim();
+            if (res.isNotEmpty) return res;
+          }
+        }
+        return val.toString();
+      }
+      return val.toString();
+    }
+
     double? parsedAmount;
     if (json['amount'] != null) {
       final val = double.tryParse(json['amount'].toString());
@@ -328,17 +343,19 @@ class TransactionDraft {
     }
 
     List<String> uncertain = [];
-    if (json['uncertainFields'] != null) {
-      uncertain = List<String>.from(json['uncertainFields']);
+    if (json['uncertainFields'] != null && json['uncertainFields'] is List) {
+      uncertain = (json['uncertainFields'] as List)
+          .map((e) => e.toString())
+          .toList();
     }
 
-    String? pm = json['paymentMethod']?.toString();
+    String? pm = extractString(json['paymentMethod']);
     if (pm == 'other') {
       pm = null;
       if (!uncertain.contains('paymentMethod')) uncertain.add('paymentMethod');
     }
 
-    String? c = json['category']?.toString();
+    String? c = extractString(json['category']);
     if (c != null) {
       if (c.toLowerCase() == 'restaurants') {
         c = 'restaurant';
@@ -346,7 +363,7 @@ class TransactionDraft {
     }
     if (c == null && !uncertain.contains('category')) uncertain.add('category');
 
-    String? b = json['bucket']?.toString();
+    String? b = extractString(json['bucket']);
     if (b == null && c != null) {
       if (FinanceMappings.isNeedsCategory(c)) {
         b = 'needs';
@@ -356,28 +373,28 @@ class TransactionDraft {
     }
     if (b == null && !uncertain.contains('bucket')) uncertain.add('bucket');
 
-    String? tt = json['transactionType']?.toString();
+    String? tt = extractString(json['transactionType']);
     if (tt == null && !uncertain.contains('transactionType'))
       uncertain.add('transactionType');
 
     return TransactionDraft(
       transactionType: tt,
       amount: parsedAmount,
-      currency: json['currency']?.toString(),
+      currency: extractString(json['currency']),
       category: c,
-      description: json['description']?.toString(),
-      merchant: json['merchant']?.toString(),
+      description: extractString(json['description']),
+      merchant: extractString(json['merchant']),
       transactionDate: json['date'] != null
-          ? DateTime.tryParse(json['date'].toString())
+          ? DateTime.tryParse(extractString(json['date']) ?? '')
           : null,
       confidence: parsedConfidence,
       uncertainFields: uncertain,
-      flexibility: json['flexibility']?.toString(),
-      sourceType: json['sourceType']?.toString(),
+      flexibility: extractString(json['flexibility']),
+      sourceType: extractString(json['sourceType']),
       bucket: b,
       paymentMethod: pm,
-      movementType: json['movementType']?.toString(),
-      frequency: json['frequency']?.toString(),
+      movementType: extractString(json['movementType']),
+      frequency: extractString(json['frequency']),
     );
   }
 

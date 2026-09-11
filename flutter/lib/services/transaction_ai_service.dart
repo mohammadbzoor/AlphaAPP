@@ -24,7 +24,12 @@ class TransactionAiService {
         debugPrint('VOICE statusCode=${response.statusCode}');
         debugPrint('VOICE rawBodyType=${response.body.runtimeType}');
 
-        final result = TransactionAnalysisResult.parse(response.body);
+        final decoded = normalizeJsonValue(response.body);
+        try {
+          debugPrint(const JsonEncoder.withIndent('  ').convert(decoded));
+        } catch (_) {}
+
+        final result = TransactionAnalysisResult.parse(decoded);
         return result;
       } else if (response.statusCode == 401 || response.statusCode == 403) {
         throw ApiException(
@@ -174,5 +179,6 @@ class TransactionAiService {
       default:
         return MediaType('image', 'jpeg');
     }
+
   }
 }

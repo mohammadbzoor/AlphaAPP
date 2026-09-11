@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -199,8 +200,8 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Financial Profile',
-          style: GoogleFonts.inter(
+          'financial_profile_screen.title'.tr(),
+          style: GoogleFonts.ibmPlexSansArabic(
             fontWeight: FontWeight.w700,
             fontSize: 18,
             color: isDark ? AppColors.darkText : AppColors.lightText,
@@ -213,8 +214,8 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen> {
               child: TextButton.icon(
                 onPressed: _enterEdit,
                 icon: Icon(Icons.edit_outlined, size: 16, color: primary),
-                label: Text('Edit',
-                    style: GoogleFonts.inter(
+                label: Text('financial_profile_screen.edit'.tr(),
+                    style: GoogleFonts.ibmPlexSansArabic(
                         color: primary, fontWeight: FontWeight.w600)),
               ),
             ),
@@ -358,11 +359,11 @@ class _ReadOnlyMode extends StatelessWidget {
           // 2 ── Expected Income ─────────────────────────────
           _SectionCard(
             isDark: isDark,
-            title: 'Expected Monthly Income',
+            title: 'financial_profile_screen.expected_income'.tr(),
             icon: Icons.account_balance_wallet_outlined,
             children: [
               _InfoRow(
-                label: 'Expected Monthly Income',
+                label: 'financial_profile_screen.expected_income'.tr(),
                 value: expectedIncome != null
                     ? '${_fmt(expectedIncome.toDouble())} $currency'
                     : 'Not provided',
@@ -370,7 +371,7 @@ class _ReadOnlyMode extends StatelessWidget {
                 isDark: isDark,
               ),
               _InfoRow(
-                label: 'Currency',
+                label: 'financial_profile_screen.currency'.tr(),
                 value: data['currency']?.toString() ?? 'Not provided',
                 isDark: isDark,
               ),
@@ -385,11 +386,11 @@ class _ReadOnlyMode extends StatelessWidget {
           if (incomeSources.isNotEmpty)
             _SectionCard(
               isDark: isDark,
-              title: 'Income Sources',
+              title: 'financial_profile_screen.income_sources'.tr(),
               icon: Icons.paid_outlined,
               children: [
                 ...incomeSources.map((src) => _InfoRow(
-                      label: _formatSourceType(src['type']?.toString()),
+                      label: _formatSourceType(src['type']?.toString(), context),
                       value:
                           '${_fmt((src['amount'] as num?)?.toDouble() ?? 0)} $currency',
                       isDark: isDark,
@@ -1514,9 +1515,10 @@ String _formatEnum(String? raw) {
       .join(' ');
 }
 
-String _formatSourceType(String? raw) {
-  if (raw == null || raw.isEmpty) return 'Income Source';
-  const map = <String, String>{
+String _formatSourceType(String? raw, BuildContext context) {
+  if (raw == null || raw.isEmpty) return 'financial_profile_screen.income_sources'.tr();
+  final isAr = context.locale.languageCode == 'ar';
+  const mapEn = <String, String>{
     'regular_salary': 'Regular Salary',
     'salary': 'Regular Salary',
     'recurring_side_income': 'Recurring Side Income',
@@ -1526,5 +1528,15 @@ String _formatSourceType(String? raw) {
     'business': 'Business Income',
     'other': 'Other Income',
   };
-  return map[raw] ?? _formatEnum(raw);
+  const mapAr = <String, String>{
+    'regular_salary': 'راتب شهري منتظم',
+    'salary': 'راتب شهري',
+    'recurring_side_income': 'دخل إضافي متكرر',
+    'freelance': 'عمل حر',
+    'rental_income': 'إيراد عقارات',
+    'investment': 'عائد استثمارات',
+    'business': 'أرباح تجارة/أعمال',
+    'other': 'مصادر أخرى',
+  };
+  return isAr ? (mapAr[raw] ?? _formatEnum(raw)) : (mapEn[raw] ?? _formatEnum(raw));
 }
